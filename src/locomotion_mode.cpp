@@ -1,4 +1,4 @@
-#include "simple_rover_locomotion/locomotion_mode.hpp"
+#include "locomotion_mode/locomotion_mode.hpp"
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options)
 : Node("locomotion_mode_node",
@@ -20,8 +20,8 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options)
   load_robot_model();
 
   // Create Services
-  activate_service_ = this->create_service<simple_rover_locomotion::srv::Activate>("activate", std::bind(&LocomotionMode::activate, this, std::placeholders::_1, std::placeholders::_2));
-  changelocomotionmode_service_ = this->create_service<simple_rover_locomotion::srv::ChangeLocomotionMode>("change_locomotion_mode", std::bind(&LocomotionMode::change_locomotion_mode, this, std::placeholders::_1, std::placeholders::_2));
+  activate_service_ = this->create_service<rover_msgs::srv::Activate>("activate", std::bind(&LocomotionMode::activate, this, std::placeholders::_1, std::placeholders::_2));
+  changelocomotionmode_service_ = this->create_service<rover_msgs::srv::ChangeLocomotionMode>("change_locomotion_mode", std::bind(&LocomotionMode::change_locomotion_mode, this, std::placeholders::_1, std::placeholders::_2));
 
   // Create Publishers
   joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>("rover_joint_cmds", 10);
@@ -42,8 +42,8 @@ void LocomotionMode::initialize_subscribers()
 
 }
 
-void LocomotionMode::activate(const simple_rover_locomotion::srv::Activate::Request::SharedPtr request,
-         std::shared_ptr<simple_rover_locomotion::srv::Activate::Response>      response)
+void LocomotionMode::activate(const rover_msgs::srv::Activate::Request::SharedPtr request,
+         std::shared_ptr<rover_msgs::srv::Activate::Response>      response)
 {
     if (request->goal_state) {
         response->new_state = true;
@@ -54,8 +54,8 @@ void LocomotionMode::activate(const simple_rover_locomotion::srv::Activate::Requ
     RCLCPP_INFO(this->get_logger(), "New State %d", response->new_state);
 }
 
-void LocomotionMode::change_locomotion_mode(const simple_rover_locomotion::srv::ChangeLocomotionMode::Request::SharedPtr request,
-         std::shared_ptr<simple_rover_locomotion::srv::ChangeLocomotionMode::Response>      response)
+void LocomotionMode::change_locomotion_mode(const rover_msgs::srv::ChangeLocomotionMode::Request::SharedPtr request,
+         std::shared_ptr<rover_msgs::srv::ChangeLocomotionMode::Response>      response)
 {
     // if (request->locomotion_mode == '2D_KINEMATICS' || request->locomotion_mode == 'WHEELWALKING') {
     //     response->response = 'LOCOMOTION CHANGED';

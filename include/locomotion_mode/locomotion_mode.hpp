@@ -17,8 +17,8 @@
 #include <rover_msgs/msg/joint_command.hpp>
 #include <rover_msgs/msg/joint_command_array.hpp>
 
-#include <simple_rover_locomotion/srv/activate.hpp>
-#include <simple_rover_locomotion/srv/change_locomotion_mode.hpp>
+#include <rover_msgs/srv/activate.hpp>
+#include <rover_msgs/srv/change_locomotion_mode.hpp>
 
 using namespace std::chrono_literals;
 
@@ -93,14 +93,14 @@ class LocomotionMode : public rclcpp::Node
   private:
 
     // Services Objects
-    rclcpp::Service<simple_rover_locomotion::srv::Activate>::SharedPtr activate_service_;
-    rclcpp::Service<simple_rover_locomotion::srv::ChangeLocomotionMode>::SharedPtr changelocomotionmode_service_;
+    rclcpp::Service<rover_msgs::srv::Activate>::SharedPtr activate_service_;
+    rclcpp::Service<rover_msgs::srv::ChangeLocomotionMode>::SharedPtr changelocomotionmode_service_;
  
     // Services Callbacks
-    void activate(const simple_rover_locomotion::srv::Activate::Request::SharedPtr request,
-            std::shared_ptr<simple_rover_locomotion::srv::Activate::Response>      response);
-    void change_locomotion_mode(const simple_rover_locomotion::srv::ChangeLocomotionMode::Request::SharedPtr request,
-                          std::shared_ptr<simple_rover_locomotion::srv::ChangeLocomotionMode::Response>      response);
+    void activate(const rover_msgs::srv::Activate::Request::SharedPtr request,
+            std::shared_ptr<rover_msgs::srv::Activate::Response>      response);
+    void change_locomotion_mode(const rover_msgs::srv::ChangeLocomotionMode::Request::SharedPtr request,
+                          std::shared_ptr<rover_msgs::srv::ChangeLocomotionMode::Response>      response);
 
     // Rover Velocities Subscription
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;    
