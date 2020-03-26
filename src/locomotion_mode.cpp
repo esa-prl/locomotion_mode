@@ -20,8 +20,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options)
   load_robot_model();
 
   // Create Services
-  activate_service_ = this->create_service<rover_msgs::srv::Activate>("activate", std::bind(&LocomotionMode::activate, this, std::placeholders::_1, std::placeholders::_2));
-  changelocomotionmode_service_ = this->create_service<rover_msgs::srv::ChangeLocomotionMode>("change_locomotion_mode", std::bind(&LocomotionMode::change_locomotion_mode, this, std::placeholders::_1, std::placeholders::_2));
+  enable_service_ = this->create_service<rover_msgs::srv::Enable>("enable", std::bind(&LocomotionMode::enable, this, std::placeholders::_1, std::placeholders::_2));
 
   // Create Publishers
   joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>("rover_joint_cmds", 10);
@@ -42,29 +41,25 @@ void LocomotionMode::initialize_subscribers()
 
 }
 
-void LocomotionMode::activate(const rover_msgs::srv::Activate::Request::SharedPtr request,
-         std::shared_ptr<rover_msgs::srv::Activate::Response>      response)
+void LocomotionMode::enable(const rover_msgs::srv::Enable::Request::SharedPtr request,
+         std::shared_ptr<rover_msgs::srv::Enable::Response>      response)
 {
-    if (request->goal_state) {
-        response->new_state = true;
-    }
-    else {response->new_state = false;}
 
-    RCLCPP_INFO(this->get_logger(), "Goal State %d", request->goal_state);
-    RCLCPP_INFO(this->get_logger(), "New State %d", response->new_state);
+    RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to enable this locomotion mode.");    
+
+    response->success = false;
+    RCLCPP_WARN(this->get_logger(), "Enable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
+
 }
 
-void LocomotionMode::change_locomotion_mode(const rover_msgs::srv::ChangeLocomotionMode::Request::SharedPtr request,
-         std::shared_ptr<rover_msgs::srv::ChangeLocomotionMode::Response>      response)
+void LocomotionMode::disable(const rover_msgs::srv::Disable::Request::SharedPtr request,
+         std::shared_ptr<rover_msgs::srv::Disable::Response>      response)
 {
-    // if (request->locomotion_mode == '2D_KINEMATICS' || request->locomotion_mode == 'WHEELWALKING') {
-    //     response->response = 'LOCOMOTION CHANGED';
-    // }
-    // else {response->response = 'INVALID LOCOMOTION MODE REQUESTED';}
 
-    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Response: %s", response->response.c_str());
-    response->response = "SUCCSEFULLY SET " + request->locomotion_mode + " MODE!";
-    RCLCPP_INFO(this->get_logger(), "Desired Locomotion Mode %s", request->locomotion_mode.c_str());
+    RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to disable this locomotion mode.");    
+
+    response->success = false;
+    RCLCPP_WARN(this->get_logger(), "Disable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
 }
 
 // Dummy Callback function in case the derived class forgets to create a custom callback function
@@ -185,8 +180,7 @@ urdf::Pose LocomotionMode::get_parent_joint_position(std::shared_ptr<urdf::Link>
 
 urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
 {
-
-  // Based on convention from Hendriks Summary
+  // Based on convention from Robot Dynamics of RSL@ETHZ. Also found on Hendriks RD-Summary
   // TODO Transform orientation
   urdf::Pose new_child;
 
@@ -221,10 +215,11 @@ std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
 
   while (tmp_link->parent_joint) {
-    if (tmp_link->parent_joint->name.find(name) != std::string::npos) return tmp_link;
+    if (tmp_link->parent_joint->name.find(name) != std::string::npos) break;
     tmp_link = tmp_link->getParent();
   }
-  // Add return type that will cause if(return_object) to be false
+
+  return tmp_link;
 }
 
 

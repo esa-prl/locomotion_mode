@@ -18,7 +18,7 @@ KNOWN BUGS
 * Message Definitions don't compile with Header variable...
 * robot_state_publisher still prints messages after removing output='screen' in launch file.
 
-0.0.0 (2019-11-20)
+0.0.1 (unreleased)
 ------------------
 * Split Locomotion Mode Library from Simple Rover Locomotion
 * loading of MaRTA Xacro Model

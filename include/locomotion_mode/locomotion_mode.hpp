@@ -8,7 +8,6 @@
 #include <memory>
 
 #include <string.h>
-// #include <math.h>
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -17,8 +16,8 @@
 #include <rover_msgs/msg/joint_command.hpp>
 #include <rover_msgs/msg/joint_command_array.hpp>
 
-#include <rover_msgs/srv/activate.hpp>
-#include <rover_msgs/srv/change_locomotion_mode.hpp>
+#include <rover_msgs/srv/enable.hpp>
+#include <rover_msgs/srv/disable.hpp>
 
 using namespace std::chrono_literals;
 
@@ -93,14 +92,14 @@ class LocomotionMode : public rclcpp::Node
   private:
 
     // Services Objects
-    rclcpp::Service<rover_msgs::srv::Activate>::SharedPtr activate_service_;
-    rclcpp::Service<rover_msgs::srv::ChangeLocomotionMode>::SharedPtr changelocomotionmode_service_;
+    rclcpp::Service<rover_msgs::srv::Enable>::SharedPtr  enable_service_;
+    rclcpp::Service<rover_msgs::srv::Disable>::SharedPtr disable_service_;
  
     // Services Callbacks
-    void activate(const rover_msgs::srv::Activate::Request::SharedPtr request,
-            std::shared_ptr<rover_msgs::srv::Activate::Response>      response);
-    void change_locomotion_mode(const rover_msgs::srv::ChangeLocomotionMode::Request::SharedPtr request,
-                          std::shared_ptr<rover_msgs::srv::ChangeLocomotionMode::Response>      response);
+    void enable(const rover_msgs::srv::Enable::Request::SharedPtr   request,
+            std::shared_ptr<rover_msgs::srv::Enable::Response>      response);
+    void disable(const rover_msgs::srv::Disable::Request::SharedPtr request,
+            std::shared_ptr<rover_msgs::srv::Disable::Response>     response);
 
     // Rover Velocities Subscription
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;    
@@ -119,8 +118,6 @@ class LocomotionMode : public rclcpp::Node
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
-
-
 
     std::vector<std::shared_ptr<urdf::Joint>> joints_;
     std::vector<std::shared_ptr<urdf::Link>> links_;
