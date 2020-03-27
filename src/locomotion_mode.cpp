@@ -4,8 +4,8 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 : Node(node_name,
   options.allow_undeclared_parameters(true).
       automatically_declare_parameters_from_overrides(true)),
-  current_joint_state_(),
   node_name_(node_name),
+  current_joint_state_(),
   model_(new urdf::Model()),
   // TODO: Readout from Config file
   driving_name_("DRV"),

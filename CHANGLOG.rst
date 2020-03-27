@@ -4,6 +4,7 @@ Changelog for package locomotion_mode
 
 TODO
 ----
+* Switch to Abstract Model so people don't need to use URDF specific calls incase we want to later switch to the SDF model
 * Add README.
 * go through TODO's in code
 * implement real services for activation and deactivation of locomotion mode
@@ -20,6 +21,7 @@ KNOWN BUGS
 
 0.0.1 (unreleased)
 ------------------
+* passing up proper node name from derived class
 * Split Locomotion Mode Library from Simple Rover Locomotion
 * loading of MaRTA Xacro Model
 * reading out limits from urdf file works.
