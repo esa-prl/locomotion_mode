@@ -80,8 +80,6 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
 void LocomotionMode::load_params()
 {
   // Look in /demos/demo_nodes_cpp/src/parameters/set_and_get_parameters.cpp for implementation examples
-
-  // TODO: Tried delaring this a member variable, but didn't get it running. Check later if there are better tutorials for param loading. 2019-12-12
   auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
 
   while (!parameters_client->wait_for_service(1s)) {
@@ -116,51 +114,33 @@ void LocomotionMode::load_robot_model()
         }     
       }
   
-      // Get Driving links and create legs
+      // Look for Driving link and create leg of locomotion model
       if (link->name.find(driving_name_) != std::string::npos) {
         auto leg = std::make_shared<LocomotionMode::Leg>();
-
         init_motor(leg->driving_motor, link);
-
         legs_.push_back(leg);
       }
     }
 
     // TODO: Check Joint type to be continuous or revolut?
-    // Loop through all legs and find steering and deployment joints.
+    // Loop through all legs, find steering and deployment joints. Then save them into the leg.
     for (std::shared_ptr<LocomotionMode::Leg> leg : legs_)
     {
       init_motor(leg->steering_motor, get_link_in_leg(leg->driving_motor->link, steering_name_));
       init_motor(leg->deployment_motor, get_link_in_leg(leg->driving_motor->link, deployment_name_));
     }
-
-
 }
 
+// Define Link, joint and global position of a locomotion_mode motor.
 void LocomotionMode::init_motor(std::shared_ptr<LocomotionMode::Motor> &motor, std::shared_ptr<urdf::Link> link) {
   motor->link = link;
-  
   motor->joint = link->parent_joint;
-
   motor->global_pose = get_parent_joint_position(link);
-}
-
-std::shared_ptr<LocomotionMode::Motor> LocomotionMode::init_motor(std::shared_ptr<urdf::Link> link) {
-  // std::shared_ptr<LocomotionMode::Motor> motor;
-  auto motor = std::make_shared<LocomotionMode::Motor>();
-
-  motor->link = link;
-  
-  motor->joint = link->parent_joint;
-
-  motor->global_pose = get_parent_joint_position(link);
-
-  return motor;
 }
 
 // Derive Position of Joint in static configuration
-// TODO: Pass value instaed of shared_ptr
 urdf::Pose LocomotionMode::get_parent_joint_position(std::shared_ptr<urdf::Link> &link) {
+  // TODO: Potentially pass by value instaed of shared_ptr so we don't have to copy it.
   // Copy link so we don't overwrite the original one
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*link);
 
@@ -173,16 +153,13 @@ urdf::Pose LocomotionMode::get_parent_joint_position(std::shared_ptr<urdf::Link>
 
     tmp_link = tmp_link->getParent();
   }
-
-
-
   return child_pose;
 }
 
+// Trasposes position of child pose into the coordinate frame of the parent pose.
 urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
 {
   // Based on convention from Robot Dynamics of RSL@ETHZ. Also found on Hendriks RD-Summary
-  // TODO Transform orientation
   urdf::Pose new_child;
 
   double &e0 = parent.rotation.w;
@@ -190,6 +167,7 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
   double &e2 = parent.rotation.y;
   double &e3 = parent.rotation.z;
 
+  // Populate rotation matrix from parent quaternion. 
   double c11 = pow(e0, 2) + pow(e1, 2) - pow(e2, 2) - pow(e3, 2);
   double c12 = 2 * e1 * e2 - 2 * e0 * e3;
   double c13 = 2 * e0 * e2 + 2 * e1 * e3;
@@ -200,17 +178,22 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
   double c32 = 2 * e0 * e1 + 2 * e2 * e3;
   double c33 = pow(e0, 2) - pow(e1, 2) - pow(e2, 2) + pow(e3, 2);
 
+  // Populate parent translation vector.
   double &c14 = parent.position.x;
   double &c24 = parent.position.y;
   double &c34 = parent.position.z;
 
+  // Compute transposed child by pos_child_in_parent_frame=_child_to_parent*pos_child_in_child_frame
   new_child.position.x = c11 * child.position.x + c12 * child.position.y + c13 * child.position.z + c14 * 1;
   new_child.position.y = c21 * child.position.x + c22 * child.position.y + c23 * child.position.z + c24 * 1;
   new_child.position.z = c31 * child.position.x + c32 * child.position.y + c33 * child.position.z + c34 * 1;
 
+  // TODO Transform orientation
+
   return new_child;
 }
 
+// Find a link in the parents of the provided link which. The link is found if the search_name is in the link_name. They don't have to match fully. 
 std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf::Link> &start_link, std::string name) {
 
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
@@ -224,7 +207,8 @@ std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf
 }
 
 
-// Save the joint states into the class
+// Callback function, that saves the joint states into the class
+// This is needed so the joint states can be used in the rover_velocity_callback_method of the derived class.
 void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
@@ -247,8 +231,6 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
           else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
         }
       } 
-
     }
   }
-
 }

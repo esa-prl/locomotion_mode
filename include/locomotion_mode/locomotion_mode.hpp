@@ -112,7 +112,7 @@ class LocomotionMode : public rclcpp::Node
     // Joint States Callback
     void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-    // Model
+    // URDF Model
     std::string model_name_;
     std::string model_dir_;
     std::string model_path_;
@@ -125,8 +125,6 @@ class LocomotionMode : public rclcpp::Node
     std::vector<std::shared_ptr<urdf::Link>> links_;
 
     void init_motor(std::shared_ptr<LocomotionMode::Motor> &motor, std::shared_ptr<urdf::Link> link);
-
-    std::shared_ptr<LocomotionMode::Motor> init_motor(std::shared_ptr<urdf::Link> link);
 
     // Find first joint in leg, which name contains the specified name
     std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> &start_link, std::string name);  
