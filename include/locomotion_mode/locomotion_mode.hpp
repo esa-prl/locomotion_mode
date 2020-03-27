@@ -25,7 +25,7 @@ using namespace std::chrono_literals;
 class LocomotionMode : public rclcpp::Node
 {
   public:
-    LocomotionMode(rclcpp::NodeOptions options);
+    LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
 
     // TODO: Inside this namespace? 
     // TODO: What should be pointers, what not?
@@ -64,6 +64,8 @@ class LocomotionMode : public rclcpp::Node
     };
 
   protected:
+    std::string node_name_;
+
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 

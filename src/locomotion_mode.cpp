@@ -1,10 +1,11 @@
 #include "locomotion_mode/locomotion_mode.hpp"
 
-LocomotionMode::LocomotionMode(rclcpp::NodeOptions options)
-: Node("locomotion_mode_node",
+LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
+: Node(node_name,
   options.allow_undeclared_parameters(true).
       automatically_declare_parameters_from_overrides(true)),
   current_joint_state_(),
+  node_name_(node_name),
   model_(new urdf::Model()),
   // TODO: Readout from Config file
   driving_name_("DRV"),
@@ -42,7 +43,7 @@ void LocomotionMode::initialize_subscribers()
 }
 
 void LocomotionMode::enable(const rover_msgs::srv::Enable::Request::SharedPtr request,
-         std::shared_ptr<rover_msgs::srv::Enable::Response>      response)
+                      std::shared_ptr<rover_msgs::srv::Enable::Response>      response)
 {
 
     RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to enable this locomotion mode.");    
@@ -53,7 +54,7 @@ void LocomotionMode::enable(const rover_msgs::srv::Enable::Request::SharedPtr re
 }
 
 void LocomotionMode::disable(const rover_msgs::srv::Disable::Request::SharedPtr request,
-         std::shared_ptr<rover_msgs::srv::Disable::Response>      response)
+                       std::shared_ptr<rover_msgs::srv::Disable::Response>      response)
 {
 
     RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to disable this locomotion mode.");    
