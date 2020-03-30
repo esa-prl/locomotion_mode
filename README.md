@@ -64,12 +64,17 @@ This node should never be started without being inherited by a derived class.
 
 #### Subscribed Topics
 
-* **`/rover_motion_cmd`** ([geometry_msgs/twist])
+* **`/rover_motion_cmd`** ([geometry_msgs/Twist])
+
+	Desired linear and angular velocity of rover.
+
+
+* **`/joint_states`** ([sensor_msgs/JointState])
 
 	Desired linear and angular velocity of rover.
 
 #### Published Topics
-* **`/rover_joint_cmds`** ([rover_msgs/joint_commmand_array])
+* **`/rover_joint_cmds`** ([rover_msgs/JointCommandArray])
 
 	Desired joint positions and velocities of rover.
 
@@ -91,5 +96,6 @@ Please report bugs and request features using the github issue tracker.
 [rover_msgs]: https://github.com/esa-prl/rover_msgs
 [rover_config]: https://github.com/esa-prl/rover_config.git
 [rviz]: http://wiki.ros.org/rviz
-[std_srvs/Trigger]: http://docs.ros.org/api/std_srvs/html/srv/Trigger.html
-[sensor_msgs/Temperature]: http://docs.ros.org/api/sensor_msgs/html/msg/Temperature.html
+[geometry_msgs/Twist]: https://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
+[sensor_msgs/JointState]: http://docs.ros.org/api/sensor_msgs/html/msg/JointState.html
+[rover_msgs/JointCommandArray]: https://github.com/esa-prl/rover_msgs/blob/master/msg/JointCommandArray.msg
