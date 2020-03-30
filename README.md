@@ -82,7 +82,7 @@ This node should never be started without being inherited by a derived class.
 
 TODO: Add services
 
-* **`enable`** ([std_srvs/Trigger])
+* **`EXAMPLE`** ([std_srvs/Trigger])
 
 	Returns information about the current average. For example, you can trigger the computation from the console with
 
