@@ -7,7 +7,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   node_name_(node_name),
   current_joint_state_(),
   model_(new urdf::Model()),
-  // TODO: Readout from Config file
+  // TODO: Readout Names from Config file
   driving_name_("DRV"),
   steering_name_("STR"),
   deployment_name_("DEP"),
