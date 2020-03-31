@@ -74,7 +74,7 @@ This node should never be started without being inherited by a derived class.
 	Desired linear and angular velocity of rover.
 
 #### Published Topics
-* **`/rover_joint_cmds`** ([rover_msgs/JointCommandArray])
+* **`/joint_cmds`** ([rover_msgs/JointCommandArray])
 
 	Desired joint positions and velocities of rover.
 

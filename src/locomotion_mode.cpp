@@ -21,10 +21,13 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   load_robot_model();
 
   // Create Services
-  enable_service_ = this->create_service<rover_msgs::srv::Enable>("enable", std::bind(&LocomotionMode::enable, this, std::placeholders::_1, std::placeholders::_2));
+  enable_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/enable", std::bind(&LocomotionMode::enable, this, std::placeholders::_1, std::placeholders::_2));
+  disable_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/disable", std::bind(&LocomotionMode::disable, this, std::placeholders::_1, std::placeholders::_2));
 
   // Create Publishers
-  joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>("rover_joint_cmds", 10);
+  joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>("joint_cmds", 10);
   
   // Create Subscriptions
   joint_state_subscription_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -42,25 +45,20 @@ void LocomotionMode::initialize_subscribers()
 
 }
 
-void LocomotionMode::enable(const rover_msgs::srv::Enable::Request::SharedPtr request,
-                      std::shared_ptr<rover_msgs::srv::Enable::Response>      response)
+void LocomotionMode::enable(const std_srvs::srv::Trigger::Request::SharedPtr request,
+                      std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-
-    RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to enable this locomotion mode.");    
-
-    response->success = false;
-    RCLCPP_WARN(this->get_logger(), "Enable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
-
+  RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to enable this locomotion mode.");    
+  response->success = false;
+  RCLCPP_WARN(this->get_logger(), "Enable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
 }
 
-void LocomotionMode::disable(const rover_msgs::srv::Disable::Request::SharedPtr request,
-                       std::shared_ptr<rover_msgs::srv::Disable::Response>      response)
+void LocomotionMode::disable(const std_srvs::srv::Trigger::Request::SharedPtr request,
+                       std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-
-    RCLCPP_INFO(this->get_logger(), "Locomotion Manager requested to disable this locomotion mode.");    
-
-    response->success = false;
-    RCLCPP_WARN(this->get_logger(), "Disable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
+  RCLCPP_INFO(this->get_logger(), "Someone requested to disable this locomotion mode.");    
+  response->success = false;
+  RCLCPP_WARN(this->get_logger(), "Disable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
 }
 
 // Dummy Callback function in case the derived class forgets to create a custom callback function

@@ -11,13 +11,12 @@
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
 #include <rover_msgs/msg/joint_command.hpp>
 #include <rover_msgs/msg/joint_command_array.hpp>
 
-#include <rover_msgs/srv/enable.hpp>
-#include <rover_msgs/srv/disable.hpp>
 
 using namespace std::chrono_literals;
 
@@ -66,6 +65,9 @@ class LocomotionMode : public rclcpp::Node
   protected:
     std::string node_name_;
 
+    // Node can only work if it is enabled.
+    bool enabled_;
+
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 
@@ -94,14 +96,14 @@ class LocomotionMode : public rclcpp::Node
   private:
 
     // Services Objects
-    rclcpp::Service<rover_msgs::srv::Enable>::SharedPtr  enable_service_;
-    rclcpp::Service<rover_msgs::srv::Disable>::SharedPtr disable_service_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr  enable_service_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
  
     // Services Callbacks
-    void enable(const rover_msgs::srv::Enable::Request::SharedPtr   request,
-            std::shared_ptr<rover_msgs::srv::Enable::Response>      response);
-    void disable(const rover_msgs::srv::Disable::Request::SharedPtr request,
-            std::shared_ptr<rover_msgs::srv::Disable::Response>     response);
+    void enable(const std_srvs::srv::Trigger::Request::SharedPtr   request,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      response);
+    void disable(const std_srvs::srv::Trigger::Request::SharedPtr request,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>     response);
 
     // Rover Velocities Subscription
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;    
