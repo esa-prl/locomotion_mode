@@ -42,7 +42,6 @@ void LocomotionMode::initialize_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
   "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
-
 }
 
 void LocomotionMode::enable(const std_srvs::srv::Trigger::Request::SharedPtr request,
@@ -59,10 +58,16 @@ void LocomotionMode::disable(const std_srvs::srv::Trigger::Request::SharedPtr re
                        std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-  "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
+    "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::disabled_callback, this, std::placeholders::_1));
+
   RCLCPP_INFO(this->get_logger(), "Someone requested to disable this locomotion mode.");    
   response->success = false;
   RCLCPP_WARN(this->get_logger(), "Disable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
+}
+
+// Dummy Callback in case someone actually sends a message to the disabled topic.
+void LocomotionMode::disabled_callback(const geometry_msgs::msg::Twist::SharedPtr msg) {
+  RCLCPP_WARN(this->get_logger(), "%s is disabled! Activate it before usage. Why the f*** did you even send a message to this topic?!", node_name_.c_str());
 }
 
 // Dummy Callback function in case the derived class forgets to create a custom callback function

@@ -111,6 +111,9 @@ class LocomotionMode : public rclcpp::Node
     // Joint States Subscription
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
 
+    // Disabled callback
+    void disabled_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+
     // Joint States Callback
     void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
