@@ -66,6 +66,9 @@ class LocomotionMode : public rclcpp::Node
     // Node name which should be set by derived class.
     std::string node_name_;
 
+    // Node can only work if it is enabled.
+    bool enabled_;
+
     // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
     // robot_pose_transition(TARGET_POSE)
     // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
@@ -76,7 +79,10 @@ class LocomotionMode : public rclcpp::Node
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 
     // Initialize Subscriber with callback function from derived class
-    void initialize_subscribers();
+    void enable_subscribers();
+
+    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
+    void disable_subscribers();
 
     // Velocities Callback
     virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
@@ -106,8 +112,6 @@ class LocomotionMode : public rclcpp::Node
     std::vector<std::shared_ptr<LocomotionMode::Leg>> legs_;
 
   private:
-    // Node can only work if it is enabled.
-    bool enabled_;
 
     // Services Objects
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr  enable_service_;
@@ -130,10 +134,6 @@ class LocomotionMode : public rclcpp::Node
 
     // Disabled Callback
     void rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg);
-
-    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
-    void disable_subscribers();
-
 
     // URDF Model
     std::string model_name_;

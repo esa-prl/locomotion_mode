@@ -10,6 +10,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   // TODO: Readout transitions names from config file
   enable_pose_name_("NONE"),
   disable_pose_name_("NONE"),
+  enabled_(false),
   // TODO: Readout transitions joint values from config file
   // TODO: Readout Names from Config file
   driving_name_("DRV"),
@@ -42,10 +43,17 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 
 // Function to be called from the derived class while it is being initialized.
 // Creates a subscriber using the (now by derived class overwritten) callback function
-void LocomotionMode::initialize_subscribers()
+void LocomotionMode::enable_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
   "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
+}
+
+// Disable the subscribers
+void LocomotionMode::disable_subscribers()
+{
+  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
+  "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
 }
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
@@ -58,13 +66,6 @@ bool LocomotionMode::transition_to_robot_pose(std::string transition_name) {
     // Check here if the name has a motor values corresponding to the pose name.
     return false;
   }
-}
-
-// Disable the subscribers
-void LocomotionMode::disable_subscribers()
-{
-  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-  "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
 }
 
 // enable and disable are called from the enable and disable callback. They return true or false depending if the the mode was successfully dis-/enabled.
@@ -83,10 +84,10 @@ bool LocomotionMode::disable() {
 void LocomotionMode::enable_callback(const std_srvs::srv::Trigger::Request::SharedPtr request,
                       std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  RCLCPP_INFO(this->get_logger(), "Someone requested to enable this locomotion mode.");    
+  RCLCPP_INFO(this->get_logger(), "Someone requested to enable %s.", node_name_.c_str());    
   if (enable())
   {
-    initialize_subscribers();
+    enable_subscribers();
     response->success = true;
     enabled_ = true;
   }
@@ -101,6 +102,8 @@ void LocomotionMode::disable_callback(const std_srvs::srv::Trigger::Request::Sha
                        std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
   RCLCPP_INFO(this->get_logger(), "Someone requested to disable this locomotion mode.");    
+  
+  // disable the subscribers before starting the disablign proceedure, so no rover_velocity callbacks can interfere with the transition
   disable_subscribers();
   
   if (disable()){
@@ -109,7 +112,7 @@ void LocomotionMode::disable_callback(const std_srvs::srv::Trigger::Request::Sha
   }
   else {
     response->success = false;
-    RCLCPP_WARN(this->get_logger(), "Could not disable locomotion mode: %s", node_name_.c_str());    
+    RCLCPP_WARN(this->get_logger(), "Could not properly disable locomotion mode: %s", node_name_.c_str());
   }
 
 }
