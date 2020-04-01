@@ -44,24 +44,30 @@ void LocomotionMode::initialize_subscribers()
   "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
 }
 
+void LocomotionMode::disable_subscribers()
+{
+  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
+  "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::disabled_callback, this, std::placeholders::_1));
+}
+
 void LocomotionMode::enable(const std_srvs::srv::Trigger::Request::SharedPtr request,
                       std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
   initialize_subscribers();
 
   RCLCPP_INFO(this->get_logger(), "Someone requested to enable this locomotion mode.");    
-  response->success = false;
+  response->success = true;
   RCLCPP_WARN(this->get_logger(), "Enable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
 }
 
 void LocomotionMode::disable(const std_srvs::srv::Trigger::Request::SharedPtr request,
                        std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::disabled_callback, this, std::placeholders::_1));
+
+  disable_subscribers();
 
   RCLCPP_INFO(this->get_logger(), "Someone requested to disable this locomotion mode.");    
-  response->success = false;
+  response->success = true;
   RCLCPP_WARN(this->get_logger(), "Disable LocomotionMode was not overwritten in derived class and can thus not be en-/disabled!.");    
 }
 

@@ -35,7 +35,7 @@ The locomotion_mode package has been tested under [ROS2] Eloquent and Ubuntu 18.
 
 #### Building
 
-To build from source, clone the latest version from this repository into your catkin workspace and compile the package using
+To build from source, clone the latest version from this repository into your ros2 workspace and compile the package using
 
 	cd ros2_ws/src
 	git clone https://github.com/esa-prl/locomotion_mode.git

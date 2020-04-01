@@ -77,6 +77,9 @@ class LocomotionMode : public rclcpp::Node
     // Initialize Subscriber with callback function from derived class
     void initialize_subscribers();
 
+    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
+    void disable_subscribers();
+
     // Load parameters
     void load_params();
 
