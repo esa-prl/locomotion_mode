@@ -1,4 +1,5 @@
 #include "locomotion_mode/locomotion_mode.hpp"
+#include <sstream>
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
@@ -8,8 +9,8 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   current_joint_state_(),
   model_(new urdf::Model()),
   // TODO: Readout transitions names from config file
-  enable_pose_name_("NONE"),
-  disable_pose_name_("NONE"),
+  enable_pose_(std::make_shared<RobotPose>()),
+  disable_pose_(std::make_shared<RobotPose>()),
   enabled_(false),
   // TODO: Readout transitions joint values from config file
   // TODO: Readout Names from Config file
@@ -40,6 +41,105 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 
   RCLCPP_INFO(this->get_logger(), "LocomotionMode initialized");
 }
+
+// Load Parameters
+void LocomotionMode::load_params()
+{
+  // Look in /demos/demo_nodes_cpp/src/parameters/set_and_get_parameters.cpp for implementation examples
+  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
+
+  while (!parameters_client->wait_for_service(1s)) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+      rclcpp::shutdown();
+    }
+    RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
+  }
+
+  // Loads urdf model path
+  model_path_ = parameters_client->get_parameters({"urdf_model_path"})[0].value_to_string();
+
+  std::vector<std::string> pose_names_ = this->list_parameters({"poses"}, 3).names;
+
+  // Regex to find pose names from poses.stopped.dep_position
+  // (?<=poses\.)\S*(?=\.)
+
+  // RCLCPP_WARN(this->get_logger(), "\t\t\t\t\tVector Size %u", pose_names.size());
+      
+  for (std::string pose_name : pose_names) RCLCPP_WARN(this->get_logger(), "Loaded Parameter Names [%s]", pose_name.c_str());
+
+  // Get names for enable and disable poses
+  enable_pose_name_ = parameters_client->get_parameters({"enable_pose_name"})[0].value_to_string();
+  disable_pose_name_ = parameters_client->get_parameters({"disable_pose_name"})[0].value_to_string();
+
+  // Check if en-,disable poses are in the poses list.
+
+
+  // Get names for all available poses
+  poses_names_.push_back(enable_pose_name_);
+  poses_names_.push_back(disable_pose_name_);
+
+  // Loads joint positions of each pose
+  for( auto pose_name : poses_names_){
+    if (!pose_name.compare("NONE")) RCLCPP_WARN(this->get_logger(), "POSE NONE");
+    else
+    {
+      auto pose = std::make_shared<LocomotionMode::RobotPose>();
+      try
+      {
+        pose->dep_positions = parameters_client->get_parameters({"poses." + pose_name + ".dep_positions"})[0].as_double_array();
+        pose->str_positions = parameters_client->get_parameters({"poses." + pose_name + ".str_positions"})[0].as_double_array();  
+      }
+      catch (...) {
+        RCLCPP_ERROR(this->get_logger(), "Did not find positions for pose with name: (%s)\n"
+         "Make sure the enable_pose_name match in the config file and that the array consists of floats.", pose_name.c_str());
+      }
+
+      poses_[pose_name] = pose;
+    }
+  }
+
+}
+
+
+// Load Robot Model (URDF or XACRO)
+void LocomotionMode::load_robot_model()
+{
+    if (!model_->initFile(model_path_)){
+      RCLCPP_ERROR(this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.", model_path_.c_str());
+    }
+    else RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");
+ 
+    // Get Links
+    model_->getLinks(links_);
+
+    // Loop through all links
+    for (std::shared_ptr<urdf::Link> link : links_) {
+      // Get Joints
+      if (link->child_joints.size() != 0) {
+        for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
+          joints_.push_back(child_joint);
+          // RCLCPP_INFO(this->get_logger(), "\t %s", child_joint->name.c_str());
+        }     
+      }
+  
+      // Look for Driving link and create leg of locomotion model
+      if (link->name.find(driving_name_) != std::string::npos) {
+        auto leg = std::make_shared<LocomotionMode::Leg>();
+        init_motor(leg->driving_motor, link);
+        legs_.push_back(leg);
+      }
+    }
+
+    // TODO: Check Joint type to be continuous or revolut?
+    // Loop through all legs, find steering and deployment joints. Then save them into the leg.
+    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_)
+    {
+      init_motor(leg->steering_motor, get_link_in_leg(leg->driving_motor->link, steering_name_));
+      init_motor(leg->deployment_motor, get_link_in_leg(leg->driving_motor->link, deployment_name_));
+    }
+}
+
 
 // Function to be called from the derived class while it is being initialized.
 // Creates a subscriber using the (now by derived class overwritten) callback function
@@ -134,61 +234,6 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
   RCLCPP_INFO(this->get_logger(), "Y_angular: %f.", msg->angular.y);
 
   RCLCPP_WARN(this->get_logger(), "Rover Velocities Callback was not overridden!");
-}
-
-// Load Parameters
-void LocomotionMode::load_params()
-{
-  // Look in /demos/demo_nodes_cpp/src/parameters/set_and_get_parameters.cpp for implementation examples
-  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
-
-  while (!parameters_client->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
-      rclcpp::shutdown();
-    }
-    RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
-  }
-
-  model_path_ = parameters_client->get_parameters({"urdf_model_path"})[0].value_to_string();
-}
-
-// Load Robot Model (URDF or XACRO)
-void LocomotionMode::load_robot_model()
-{
-    if (!model_->initFile(model_path_)){
-      RCLCPP_ERROR(this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.", model_path_.c_str());
-    }
-    else RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");
- 
-    // Get Links
-    model_->getLinks(links_);
-
-    // Loop through all links
-    for (std::shared_ptr<urdf::Link> link : links_) {
-      // Get Joints
-      if (link->child_joints.size() != 0) {
-        for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
-          joints_.push_back(child_joint);
-          // RCLCPP_INFO(this->get_logger(), "\t %s", child_joint->name.c_str());
-        }     
-      }
-  
-      // Look for Driving link and create leg of locomotion model
-      if (link->name.find(driving_name_) != std::string::npos) {
-        auto leg = std::make_shared<LocomotionMode::Leg>();
-        init_motor(leg->driving_motor, link);
-        legs_.push_back(leg);
-      }
-    }
-
-    // TODO: Check Joint type to be continuous or revolut?
-    // Loop through all legs, find steering and deployment joints. Then save them into the leg.
-    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_)
-    {
-      init_motor(leg->steering_motor, get_link_in_leg(leg->driving_motor->link, steering_name_));
-      init_motor(leg->deployment_motor, get_link_in_leg(leg->driving_motor->link, deployment_name_));
-    }
 }
 
 // Define Link, joint and global position of a locomotion_mode motor.

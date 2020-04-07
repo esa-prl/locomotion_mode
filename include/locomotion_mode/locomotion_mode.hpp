@@ -72,18 +72,38 @@ class LocomotionMode : public rclcpp::Node
     // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
     // robot_pose_transition(TARGET_POSE)
     // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
+
+    // Defines which positions are used in the enable and disable transition.
+    struct RobotPose
+    {
+        // std::string name;
+        std::vector<double> str_positions;
+        std::vector<double> dep_positions;
+
+        // RobotPose() :
+        // name("NONE") {}
+    };
+
+    std::shared_ptr<LocomotionMode::RobotPose> enable_pose_;
+    std::shared_ptr<LocomotionMode::RobotPose> disable_pose_;
+
     std::string enable_pose_name_;
     std::string disable_pose_name_;
 
+    std::vector<std::string> poses_names_;
+
+    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
+
+    // auto enable_pose_ = std::make_shared<LocomotionMode::RobotPose>();
+    // auto disable_pose_ = std::make_shared<LocomotionMode::RobotPose>();
+
+
+    // Model
+    std::shared_ptr<urdf::Model> model_;
+    std::vector<std::shared_ptr<LocomotionMode::Leg>> legs_;
+
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
-
-    // Initialize Subscriber with callback function from derived class
-    void enable_subscribers();
-
-    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
-    void disable_subscribers();
-
     // Velocities Callback
     virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 
@@ -99,6 +119,12 @@ class LocomotionMode : public rclcpp::Node
 
     sensor_msgs::msg::JointState current_joint_state_;
 
+    // Initialize Subscriber with callback function from derived class
+    void enable_subscribers();
+
+    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
+    void disable_subscribers();
+
     // Prototype functions that can be overwritten by the derived class.
     virtual bool enable();
     virtual bool disable();
@@ -106,10 +132,6 @@ class LocomotionMode : public rclcpp::Node
     // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
     // Robot pose consists of preprogrammed motor position and velocities.
     bool transition_to_robot_pose(std::string transition_name);
-
-    // Model
-    std::shared_ptr<urdf::Model> model_;
-    std::vector<std::shared_ptr<LocomotionMode::Leg>> legs_;
 
   private:
 
