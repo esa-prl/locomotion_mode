@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <memory>
+#include <regex>
 
 #include <string.h>
 
@@ -76,12 +77,8 @@ class LocomotionMode : public rclcpp::Node
     // Defines which positions are used in the enable and disable transition.
     struct RobotPose
     {
-        // std::string name;
         std::vector<double> str_positions;
         std::vector<double> dep_positions;
-
-        // RobotPose() :
-        // name("NONE") {}
     };
 
     std::shared_ptr<LocomotionMode::RobotPose> enable_pose_;
@@ -90,13 +87,10 @@ class LocomotionMode : public rclcpp::Node
     std::string enable_pose_name_;
     std::string disable_pose_name_;
 
-    std::vector<std::string> poses_names_;
-
     std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
 
-    // auto enable_pose_ = std::make_shared<LocomotionMode::RobotPose>();
-    // auto disable_pose_ = std::make_shared<LocomotionMode::RobotPose>();
-
+    std::vector<std::string> str_mapping_;
+    std::vector<std::string> dep_mapping_;
 
     // Model
     std::shared_ptr<urdf::Model> model_;

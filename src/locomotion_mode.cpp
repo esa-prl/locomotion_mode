@@ -1,5 +1,4 @@
 #include "locomotion_mode/locomotion_mode.hpp"
-#include <sstream>
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
@@ -59,46 +58,98 @@ void LocomotionMode::load_params()
   // Loads urdf model path
   model_path_ = parameters_client->get_parameters({"urdf_model_path"})[0].value_to_string();
 
-  std::vector<std::string> pose_names_ = this->list_parameters({"poses"}, 3).names;
+  // Loads joint mapping
+  str_mapping_ = parameters_client->get_parameters({"str_mapping"})[0].as_string_array();
+  dep_mapping_ = parameters_client->get_parameters({"dep_mapping"})[0].as_string_array();
 
-  // Regex to find pose names from poses.stopped.dep_position
-  // (?<=poses\.)\S*(?=\.)
+  // Create empty "NONE" pose.
+  poses_["NONE"] = std::make_shared<LocomotionMode::RobotPose>();
 
-  // RCLCPP_WARN(this->get_logger(), "\t\t\t\t\tVector Size %u", pose_names.size());
-      
-  for (std::string pose_name : pose_names) RCLCPP_WARN(this->get_logger(), "Loaded Parameter Names [%s]", pose_name.c_str());
+  std::string search_prefix = "poses";
+  // Finds all parameters which are prefixed by the search prefix
+  std::vector<std::string> parameter_list = this->list_parameters({search_prefix}, 3).names;
+  // Regular Expresion used to split the parameters from the parameter_list into tokens.
+  std::regex regexp("\\.");
+
+  // Loads joint positions of each pose
+  for( auto parameter_name : parameter_list) {
+    if (!parameter_name.compare("NONE")) {
+      RCLCPP_WARN(this->get_logger(), "POSE NONE");
+    }
+    else {
+      // Gets tokens of the parameters
+      std::vector<std::string> tokens(
+            std::sregex_token_iterator(parameter_name.begin(), parameter_name.end(), regexp, -1),
+            std::sregex_token_iterator()
+            );
+
+      // Checks if the initial token of the parameter name matches the search prefix.
+      if (tokens[0].compare(search_prefix)) {
+        RCLCPP_ERROR(this->get_logger(),"Search Prefix does not match parameter names. That should always match! Aborting.");
+        return;
+      }
+
+      // Copy tokens for more intuitive coding bellow.
+      std::string pose_name = tokens[1];
+      std::string positions_name = tokens[2];
+
+      // Checks if the the pose already exists
+      if (poses_.count(pose_name) == 0) {
+        // Creates pose and saves it into the map.
+        poses_[pose_name] = std::make_shared<LocomotionMode::RobotPose>();
+      }
+
+      // Tries to save dep and str-positions into map.
+      try
+      {
+        // Checks where to save the positions of the given parameter
+        if (!positions_name.compare("dep_positions")) {
+          poses_[pose_name]->dep_positions = parameters_client->get_parameters({parameter_name})[0].as_double_array();
+        }
+        else if (!positions_name.compare("str_positions")) {
+          poses_[pose_name]->str_positions = parameters_client->get_parameters({parameter_name})[0].as_double_array();  
+        }
+        else
+        {
+          RCLCPP_ERROR(this->get_logger(), "Positions name: [%s] does neither match str_positions nor dep_positions. Double check your config file.\n");
+        }
+      }
+      catch (...) {
+        RCLCPP_ERROR(this->get_logger(), "Did not find positions for pose with name: (%s)\n"
+         "Make sure that the array consists of floats.", parameter_name.c_str());
+      }
+    }
+  }
+
+  // Prints Poses for Validation
+  for (auto pose : poses_) {
+    RCLCPP_INFO(this->get_logger(), "\t---------------------");
+    RCLCPP_INFO(this->get_logger(), "\tPose Name: (%s)", pose.first.c_str());
+    
+    RCLCPP_INFO(this->get_logger(), "\tSteering Positions:");
+    for (unsigned i=0; i < pose.second->str_positions.size(); ++i) {
+      RCLCPP_INFO(this->get_logger(), "\t%s\t%f [RAD]", str_mapping_[i].c_str(), pose.second->str_positions[i]);
+    }
+
+    RCLCPP_INFO(this->get_logger(), "\tDeployment Positions:");
+    for (unsigned i=0; i < pose.second->dep_positions.size(); ++i) {
+      RCLCPP_INFO(this->get_logger(), "\t%s\t%f [RAD]", dep_mapping_[i].c_str(), pose.second->dep_positions[i]);
+    }
+  }
+  RCLCPP_INFO(this->get_logger(), "\t---------------------");
 
   // Get names for enable and disable poses
   enable_pose_name_ = parameters_client->get_parameters({"enable_pose_name"})[0].value_to_string();
   disable_pose_name_ = parameters_client->get_parameters({"disable_pose_name"})[0].value_to_string();
 
-  // Check if en-,disable poses are in the poses list.
-
-
-  // Get names for all available poses
-  poses_names_.push_back(enable_pose_name_);
-  poses_names_.push_back(disable_pose_name_);
-
-  // Loads joint positions of each pose
-  for( auto pose_name : poses_names_){
-    if (!pose_name.compare("NONE")) RCLCPP_WARN(this->get_logger(), "POSE NONE");
-    else
-    {
-      auto pose = std::make_shared<LocomotionMode::RobotPose>();
-      try
-      {
-        pose->dep_positions = parameters_client->get_parameters({"poses." + pose_name + ".dep_positions"})[0].as_double_array();
-        pose->str_positions = parameters_client->get_parameters({"poses." + pose_name + ".str_positions"})[0].as_double_array();  
-      }
-      catch (...) {
-        RCLCPP_ERROR(this->get_logger(), "Did not find positions for pose with name: (%s)\n"
-         "Make sure the enable_pose_name match in the config file and that the array consists of floats.", pose_name.c_str());
-      }
-
-      poses_[pose_name] = pose;
-    }
+  if (poses_.count(enable_pose_name_) == 0) {
+    RCLCPP_ERROR(this->get_logger(), "Enable position name [%s] was not found in poses! Enable position was set to \"NONE\"", enable_pose_name_.c_str());
+    enable_pose_name_ = "NONE";
   }
-
+  if (poses_.count(disable_pose_name_) == 0) {
+    RCLCPP_ERROR(this->get_logger(), "Disable position name [%s] was not found in poses! Disable position was set to \"NONE\"", disable_pose_name_.c_str());
+    disable_pose_name_ = "NONE";
+  }
 }
 
 
