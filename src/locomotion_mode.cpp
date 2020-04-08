@@ -178,6 +178,13 @@ void LocomotionMode::load_robot_model()
       if (link->name.find(driving_name_) != std::string::npos) {
         auto leg = std::make_shared<LocomotionMode::Leg>();
         init_motor(leg->driving_motor, link);
+
+        // Find name for leg by keeping the last two digits of the joint name.
+        std::string leg_name = leg->driving_motor->joint->name;
+        leg_name.erase(leg_name.begin(), leg_name.end()-2);
+        leg->name = leg_name;
+
+        RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
         legs_.push_back(leg);
       }
     }
@@ -208,19 +215,55 @@ void LocomotionMode::disable_subscribers()
 }
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
-bool LocomotionMode::transition_to_robot_pose(std::string transition_name) {
-  RCLCPP_INFO(this->get_logger(), "Transitioning to pose %s", transition_name.c_str());
+bool LocomotionMode::transition_to_robot_pose(std::string pose_name) {
+  RCLCPP_INFO(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
   // TODO: Implement real transition and pose data format. Would make sense to have it loaded in the urdf/xacro robot model.
   // string compare outputs 0 if the strings are identical
-  if (!transition_name.compare("NONE")) return true;
+  if (!pose_name.compare("NONE")) return true;
   else {
-    // Check here if the name has a motor values corresponding to the pose name.
-    return false;
+    // Create JointCommandArray Msg
+    rover_msgs::msg::JointCommandArray joint_command_array_msg;
+    // Create Steering Joint Message
+    rover_msgs::msg::JointCommand steering_msg;
+    // Create Deployment Joint Message
+    rover_msgs::msg::JointCommand deployment_msg;
+    
+    // Loop through legs
+    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
+
+      // Check if it is steerable
+      if (leg->steering_motor->joint) {
+        // Find desired motor position
+        int it = std::distance( str_mapping_.begin(), std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
+
+        steering_msg.name = leg->steering_motor->joint->name;
+        steering_msg.mode = ("POSITION");
+        steering_msg.value = poses_[pose_name]->str_positions[it];
+        
+        joint_command_array_msg.joint_command_array.push_back(steering_msg);
+
+      }
+      // // Check if it is desployable
+      if (leg->deployment_motor->joint) {
+        int it = std::distance( dep_mapping_.begin(), std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
+
+        deployment_msg.name = leg->deployment_motor->joint->name;
+        deployment_msg.mode = ("POSITION");
+        deployment_msg.value = poses_[pose_name]->dep_positions[it];
+        joint_command_array_msg.joint_command_array.push_back(deployment_msg);
+      }
+
+    }
+
+    joint_command_publisher_->publish(joint_command_array_msg);
+    // TODO: Add wait to see if the position was actually reached.
+
+    return true;
   }
 }
 
-// enable and disable are called from the enable and disable callback. They return true or false depending if the the mode was successfully dis-/enabled.
-// Enable and Disable can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
+// enable() and disable() are called from the enable and disable callback. They return true or false depending if the the mode was successfully dis-/enabled.
+// enable() and disable() can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
 // Without overwrite they execute a transition to the en-/disable_pose and return if it was successful or not.
 bool LocomotionMode::enable() {
   return transition_to_robot_pose(enable_pose_name_);

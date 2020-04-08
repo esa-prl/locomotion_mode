@@ -5,9 +5,8 @@ Changelog for package locomotion_mode
 TODO
 ----
 * Switch to Abstract Model so people don't need to use URDF specific calls incase we want to later switch to the SDF model
-* Add README.
 * go through TODO's in code
-* implement real services for activation and deactivation of locomotion mode
+* poses are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
 
 NICE TO HAVE
 ------------
@@ -21,6 +20,9 @@ KNOWN BUGS
 
 0.0.1 (unreleased)
 ------------------
+* added generic poses that can be used in transitions or otherwise.
+* implemented real services for enabling and disabling of locomotion mode
+* Added README.
 * passing up proper node name from derived class
 * Split Locomotion Mode Library from Simple Rover Locomotion
 * loading of MaRTA Xacro Model

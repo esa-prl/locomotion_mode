@@ -47,6 +47,9 @@ class LocomotionMode : public rclcpp::Node
 
     struct Leg
     {
+        // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
+        std::string name;
+
         std::shared_ptr<Motor> driving_motor;
         std::shared_ptr<Motor> steering_motor;
         std::shared_ptr<Motor> deployment_motor;
