@@ -12,7 +12,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   disable_pose_(std::make_shared<RobotPose>()),
   model_(new urdf::Model()),
   current_joint_state_(),
-  // TODO: Add option to overwrite drive names. This should NOT be standard!
+  // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"),
   steering_name_("STR"),
@@ -184,17 +184,37 @@ void LocomotionMode::load_robot_model()
         leg_name.erase(leg_name.begin(), leg_name.end()-2);
         leg->name = leg_name;
 
+
         RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
+
+        if (leg->driving_motor->joint->type == urdf::Joint::REVOLUTE ||
+            leg->driving_motor->joint->type == urdf::Joint::CONTINUOUS)
+        {
+          RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->driving_motor->joint->type);
+        }
+
         legs_.push_back(leg);
       }
     }
 
-    // TODO: Check Joint type to be continuous or revolut?
     // Loop through all legs, find steering and deployment joints. Then save them into the leg.
-    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_)
+    for (auto leg : legs_)
     {
-      init_motor(leg->steering_motor, get_link_in_leg(leg->driving_motor->link, steering_name_));
-      init_motor(leg->deployment_motor, get_link_in_leg(leg->driving_motor->link, deployment_name_));
+      init_motor(leg->steering_motor,
+        get_link_in_leg(leg->driving_motor->link, steering_name_));
+      init_motor(leg->deployment_motor,
+        get_link_in_leg(leg->driving_motor->link, deployment_name_));
+     
+      if (leg->steering_motor->joint->type == urdf::Joint::REVOLUTE ||
+          leg->steering_motor->joint->type == urdf::Joint::CONTINUOUS)
+      {
+        RCLCPP_WARN(this->get_logger(), "Steering Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->steering_motor->joint->type);
+      }
+      if (leg->deployment_motor->joint->type == urdf::Joint::REVOLUTE ||
+          leg->deployment_motor->joint->type == urdf::Joint::CONTINUOUS)
+      {
+        RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->deployment_motor->joint->type);
+      }
     }
 }
 
@@ -272,8 +292,9 @@ bool LocomotionMode::disable() {
 
 
 // Callback for the enable service
-void LocomotionMode::enable_callback(__attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
-                      std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
+void LocomotionMode::enable_callback(
+  __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
+                    std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
   RCLCPP_DEBUG(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
   if (enable())
@@ -289,8 +310,9 @@ void LocomotionMode::enable_callback(__attribute__((unused)) const std_srvs::srv
 }
 
 // Callback for the disable service
-void LocomotionMode::disable_callback(__attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
-                       std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
+void LocomotionMode::disable_callback(
+  __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
+                    std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
   RCLCPP_DEBUG(this->get_logger(), "Disabling %s.", node_name_.c_str());    
   
@@ -309,8 +331,10 @@ void LocomotionMode::disable_callback(__attribute__((unused)) const std_srvs::sr
 
 // Dummy Callback in case someone actually sends a message to the disabled topic.
 // TODO: There must be a better way to disable a subscription rather then just changing it's topic name to a new one.
-void LocomotionMode::rover_velocities_callback_disabled(__attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg) {
-  RCLCPP_WARN(this->get_logger(), "%s is disabled! Activate it before usage. Why the f*** did you even send a message to this topic?!", node_name_.c_str());
+void LocomotionMode::rover_velocities_callback_disabled(
+  __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg) {
+  RCLCPP_WARN(this->get_logger(), "%s is disabled! Activate it before usage."
+    "Why the f*** did you even send a message to this topic?!", node_name_.c_str());
 }
 
 // Dummy Callback function in case the derived class forgets to create a custom callback function
@@ -388,7 +412,8 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
   return new_child;
 }
 
-// Find a link in the parents of the provided link which. The link is found if the search_name is in the link_name. They don't have to match fully. 
+// Find a link in the parents of the provided link which.
+// The link is found if the search_name is in the link_name. They don't have to match fully. 
 std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf::Link> &start_link, std::string name) {
 
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
