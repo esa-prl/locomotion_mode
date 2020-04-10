@@ -8,6 +8,7 @@ Each locomotion mode requires these basic functionality. Thus, the implementatio
 
 Find here a list with already implemented locomotion modes as examples:
 - [simple_rover_locomotion](https://github.com/esa-prl/simple_rover_locomotion)
+- stop_mode (in this package)
 - [TODO: Add wheel_walking package]()
 
 **Keywords:** locomotion, library, package
@@ -80,12 +81,16 @@ This node should never be started without being inherited by a derived class.
 
 #### Services
 
-TODO: Add services
+* **`NODE_NAME/enable`** ([std_srvs/Trigger])
+	This service enables the locomotion mode. The subscription to the topic `rover_motion_cmd` is activated. This service should only be called from the locomotion manager.
 
-* **`EXAMPLE`** ([std_srvs/Trigger])
+* **`NODE_NAME/disable`** ([std_srvs/Trigger])
+	This service enables the locomotion mode. The subscription to the topic `rover_motion_cmd` is deactivated. This service should only be called from the locomotion manager.
 
-	Returns information about the current average. For example, you can trigger the computation from the console with
 
+### stop_mode_node
+
+Inherited from `locomotion_mode.hpp` base class. Simply sends a 0 velocity command to all driving modes.
 
 ## Bugs & Feature Requests
 

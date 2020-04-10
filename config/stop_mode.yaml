@@ -1,0 +1,15 @@
+stop_mode_node:
+    ros__parameters:
+        enable_pose_name: "NONE"
+        disable_pose_name: "NONE"
+
+        # Maps the names to the steering (str) and deployment (dep) positions:
+        # Must be two different vectors, since sometimes not all wheels are steerable
+        str_mapping: ['LF', 'RF', 'LM', 'RM', 'LR', 'RR']
+        dep_mapping: ['LF', 'RF', 'LM', 'RM', 'LR', 'RR']
+
+        # Rover poses saved as joint positions in [rad]
+        poses:
+          straight:
+            str_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            dep_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

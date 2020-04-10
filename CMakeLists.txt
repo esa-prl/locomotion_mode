@@ -10,6 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+## Build Library
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -49,7 +50,7 @@ install(
   DESTINATION include
 )
 
-# install target at destination
+# install targets at destination
 install(
   TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION lib
@@ -61,5 +62,18 @@ install(
 ament_export_libraries(${PROJECT_NAME})
 ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
+
+## Add additional Locomotion Modes
+find_package(locomotion_mode REQUIRED)
+
+# Add executables
+add_executable(stop_mode_node src/stop_mode.cpp)
+ament_target_dependencies(stop_mode_node ${PROJECT_NAME})
+
+# install nodes
+install(TARGETS
+  stop_mode_node
+  DESTINATION lib/${PROJECT_NAME})
+
 
 ament_package()
