@@ -4,15 +4,16 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 : Node(node_name,
   options.allow_undeclared_parameters(true).
       automatically_declare_parameters_from_overrides(true)),
+  // Protected
   node_name_(node_name),
-  current_joint_state_(),
-  model_(new urdf::Model()),
-  // TODO: Readout transitions names from config file
+  enabled_(false),
+  parameters_client_(std::make_shared<rclcpp::SyncParametersClient>(this)),
   enable_pose_(std::make_shared<RobotPose>()),
   disable_pose_(std::make_shared<RobotPose>()),
-  enabled_(false),
-  // TODO: Readout transitions joint values from config file
-  // TODO: Readout Names from Config file
+  model_(new urdf::Model()),
+  current_joint_state_(),
+  // TODO: Add option to overwrite drive names. This should NOT be standard!
+  // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"),
   steering_name_("STR"),
   deployment_name_("DEP"),
@@ -44,10 +45,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 // Load Parameters
 void LocomotionMode::load_params()
 {
-  // Look in /demos/demo_nodes_cpp/src/parameters/set_and_get_parameters.cpp for implementation examples
-  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
-
-  while (!parameters_client->wait_for_service(1s)) {
+  while (!parameters_client_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
       rclcpp::shutdown();
@@ -56,18 +54,20 @@ void LocomotionMode::load_params()
   }
 
   // Loads urdf model path
-  model_path_ = parameters_client->get_parameters({"urdf_model_path"})[0].value_to_string();
+  model_path_ = parameters_client_->get_parameters({"urdf_model_path"})[0].value_to_string();
+
+  //// LOAD POSES
+  std::string search_prefix = "poses";
+  // Finds all parameters which are prefixed by the search prefix
+  std::vector<std::string> parameter_list = this->list_parameters({search_prefix}, 3).names;
 
   // Loads joint mapping
-  str_mapping_ = parameters_client->get_parameters({"str_mapping"})[0].as_string_array();
-  dep_mapping_ = parameters_client->get_parameters({"dep_mapping"})[0].as_string_array();
+  str_mapping_ = parameters_client_->get_parameters({"str_mapping"})[0].as_string_array();
+  dep_mapping_ = parameters_client_->get_parameters({"dep_mapping"})[0].as_string_array();
 
   // Create empty "NONE" pose.
   poses_["NONE"] = std::make_shared<LocomotionMode::RobotPose>();
 
-  std::string search_prefix = "poses";
-  // Finds all parameters which are prefixed by the search prefix
-  std::vector<std::string> parameter_list = this->list_parameters({search_prefix}, 3).names;
   // Regular Expresion used to split the parameters from the parameter_list into tokens.
   std::regex regexp("\\.");
 
@@ -104,10 +104,10 @@ void LocomotionMode::load_params()
       {
         // Checks where to save the positions of the given parameter
         if (!positions_name.compare("dep_positions")) {
-          poses_[pose_name]->dep_positions = parameters_client->get_parameters({parameter_name})[0].as_double_array();
+          poses_[pose_name]->dep_positions = parameters_client_->get_parameters({parameter_name})[0].as_double_array();
         }
         else if (!positions_name.compare("str_positions")) {
-          poses_[pose_name]->str_positions = parameters_client->get_parameters({parameter_name})[0].as_double_array();  
+          poses_[pose_name]->str_positions = parameters_client_->get_parameters({parameter_name})[0].as_double_array();  
         }
         else
         {
@@ -123,24 +123,24 @@ void LocomotionMode::load_params()
 
   // Prints Poses for Validation
   for (auto pose : poses_) {
-    RCLCPP_INFO(this->get_logger(), "\t---------------------");
-    RCLCPP_INFO(this->get_logger(), "\tPose Name: (%s)", pose.first.c_str());
+    RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
+    RCLCPP_DEBUG(this->get_logger(), "\tPose Name: (%s)", pose.first.c_str());
     
-    RCLCPP_INFO(this->get_logger(), "\tSteering Positions:");
+    RCLCPP_DEBUG(this->get_logger(), "\tSteering Positions:");
     for (unsigned i=0; i < pose.second->str_positions.size(); ++i) {
-      RCLCPP_INFO(this->get_logger(), "\t%s\t%f [RAD]", str_mapping_[i].c_str(), pose.second->str_positions[i]);
+      RCLCPP_DEBUG(this->get_logger(), "\t%s\t%f [RAD]", str_mapping_[i].c_str(), pose.second->str_positions[i]);
     }
 
-    RCLCPP_INFO(this->get_logger(), "\tDeployment Positions:");
+    RCLCPP_DEBUG(this->get_logger(), "\tDeployment Positions:");
     for (unsigned i=0; i < pose.second->dep_positions.size(); ++i) {
-      RCLCPP_INFO(this->get_logger(), "\t%s\t%f [RAD]", dep_mapping_[i].c_str(), pose.second->dep_positions[i]);
+      RCLCPP_DEBUG(this->get_logger(), "\t%s\t%f [RAD]", dep_mapping_[i].c_str(), pose.second->dep_positions[i]);
     }
   }
-  RCLCPP_INFO(this->get_logger(), "\t---------------------");
+  RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
 
   // Get names for enable and disable poses
-  enable_pose_name_ = parameters_client->get_parameters({"enable_pose_name"})[0].value_to_string();
-  disable_pose_name_ = parameters_client->get_parameters({"disable_pose_name"})[0].value_to_string();
+  enable_pose_name_ = parameters_client_->get_parameters({"enable_pose_name"})[0].value_to_string();
+  disable_pose_name_ = parameters_client_->get_parameters({"disable_pose_name"})[0].value_to_string();
 
   if (poses_.count(enable_pose_name_) == 0) {
     RCLCPP_ERROR(this->get_logger(), "Enable position name [%s] was not found in poses! Enable position was set to \"NONE\"", enable_pose_name_.c_str());
@@ -204,52 +204,49 @@ void LocomotionMode::load_robot_model()
 void LocomotionMode::enable_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-  "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
+    "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
 }
 
 // Disable the subscribers
 void LocomotionMode::disable_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-  "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
+    "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
 }
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
 bool LocomotionMode::transition_to_robot_pose(std::string pose_name) {
-  RCLCPP_INFO(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
-  // TODO: Implement real transition and pose data format. Would make sense to have it loaded in the urdf/xacro robot model.
-  // string compare outputs 0 if the strings are identical
+  RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
+  // Checks if pose_name is NONE and returns.
   if (!pose_name.compare("NONE")) return true;
   else {
-    // Create JointCommandArray Msg
     rover_msgs::msg::JointCommandArray joint_command_array_msg;
-    // Create Steering Joint Message
     rover_msgs::msg::JointCommand steering_msg;
-    // Create Deployment Joint Message
     rover_msgs::msg::JointCommand deployment_msg;
     
-    // Loop through legs
+    // Loops through legs
     for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
 
-      // Check if it is steerable
+      // Checks if leg is steerable
       if (leg->steering_motor->joint) {
-        // Find desired motor position
-        int it = std::distance( str_mapping_.begin(), std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
+        // Finds desired motor index (int) based on motor name. 
+        int index = std::distance( str_mapping_.begin(), std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
 
         steering_msg.name = leg->steering_motor->joint->name;
         steering_msg.mode = ("POSITION");
-        steering_msg.value = poses_[pose_name]->str_positions[it];
+        steering_msg.value = poses_[pose_name]->str_positions[index];
         
         joint_command_array_msg.joint_command_array.push_back(steering_msg);
 
       }
-      // // Check if it is desployable
+      // Checks if leg is deployable
       if (leg->deployment_motor->joint) {
-        int it = std::distance( dep_mapping_.begin(), std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
+        // Finds desired motor index (int) based on motor name. 
+        int index = std::distance( dep_mapping_.begin(), std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
 
         deployment_msg.name = leg->deployment_motor->joint->name;
         deployment_msg.mode = ("POSITION");
-        deployment_msg.value = poses_[pose_name]->dep_positions[it];
+        deployment_msg.value = poses_[pose_name]->dep_positions[index];
         joint_command_array_msg.joint_command_array.push_back(deployment_msg);
       }
 
@@ -275,10 +272,10 @@ bool LocomotionMode::disable() {
 
 
 // Callback for the enable service
-void LocomotionMode::enable_callback(const std_srvs::srv::Trigger::Request::SharedPtr request,
+void LocomotionMode::enable_callback(__attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
                       std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  RCLCPP_INFO(this->get_logger(), "Someone requested to enable %s.", node_name_.c_str());    
+  RCLCPP_DEBUG(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
   if (enable())
   {
     enable_subscribers();
@@ -292,10 +289,10 @@ void LocomotionMode::enable_callback(const std_srvs::srv::Trigger::Request::Shar
 }
 
 // Callback for the disable service
-void LocomotionMode::disable_callback(const std_srvs::srv::Trigger::Request::SharedPtr request,
+void LocomotionMode::disable_callback(__attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
                        std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  RCLCPP_INFO(this->get_logger(), "Someone requested to disable this locomotion mode.");    
+  RCLCPP_DEBUG(this->get_logger(), "Disabling %s.", node_name_.c_str());    
   
   // disable the subscribers before starting the disablign proceedure, so no rover_velocity callbacks can interfere with the transition
   disable_subscribers();
@@ -308,12 +305,11 @@ void LocomotionMode::disable_callback(const std_srvs::srv::Trigger::Request::Sha
     response->success = false;
     RCLCPP_WARN(this->get_logger(), "Could not properly disable locomotion mode: %s", node_name_.c_str());
   }
-
 }
 
 // Dummy Callback in case someone actually sends a message to the disabled topic.
 // TODO: There must be a better way to disable a subscription rather then just changing it's topic name to a new one.
-void LocomotionMode::rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg) {
+void LocomotionMode::rover_velocities_callback_disabled(__attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg) {
   RCLCPP_WARN(this->get_logger(), "%s is disabled! Activate it before usage. Why the f*** did you even send a message to this topic?!", node_name_.c_str());
 }
 

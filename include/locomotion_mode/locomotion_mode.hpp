@@ -73,24 +73,27 @@ class LocomotionMode : public rclcpp::Node
     // Node can only work if it is enabled.
     bool enabled_;
 
+    // Access parameters through the parameters_client_
+    std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
+
     // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
     // robot_pose_transition(TARGET_POSE)
     // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
 
+    // TODO: Does this need to be defined here?
     // Defines which positions are used in the enable and disable transition.
     struct RobotPose
     {
         std::vector<double> str_positions;
         std::vector<double> dep_positions;
     };
+    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
 
     std::shared_ptr<LocomotionMode::RobotPose> enable_pose_;
     std::shared_ptr<LocomotionMode::RobotPose> disable_pose_;
 
     std::string enable_pose_name_;
     std::string disable_pose_name_;
-
-    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
 
     std::vector<std::string> str_mapping_;
     std::vector<std::string> dep_mapping_;
@@ -133,7 +136,7 @@ class LocomotionMode : public rclcpp::Node
   private:
 
     // Services Objects
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr  enable_service_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_service_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
  
     // Services Callbacks
