@@ -13,7 +13,7 @@ NICE TO HAVE
 
 KNOWN BUGS
 ----------
-* changing speed ratio while driving does not update joint velocities correctly
+* Enable pose transition does not work at the first mode activation
 * Message Definitions don't compile with Header variable...
 * robot_state_publisher still prints messages after removing output='screen' in launch file.
 

@@ -187,8 +187,8 @@ void LocomotionMode::load_robot_model()
 
         RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
 
-        if (leg->driving_motor->joint->type == urdf::Joint::REVOLUTE ||
-            leg->driving_motor->joint->type == urdf::Joint::CONTINUOUS)
+        if (leg->driving_motor->joint->type != urdf::Joint::REVOLUTE &&
+            leg->driving_motor->joint->type != urdf::Joint::CONTINUOUS)
         {
           RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->driving_motor->joint->type);
         }
@@ -205,13 +205,13 @@ void LocomotionMode::load_robot_model()
       init_motor(leg->deployment_motor,
         get_link_in_leg(leg->driving_motor->link, deployment_name_));
      
-      if (leg->steering_motor->joint->type == urdf::Joint::REVOLUTE ||
-          leg->steering_motor->joint->type == urdf::Joint::CONTINUOUS)
+      if (leg->steering_motor->joint->type != urdf::Joint::REVOLUTE &&
+          leg->steering_motor->joint->type != urdf::Joint::CONTINUOUS)
       {
         RCLCPP_WARN(this->get_logger(), "Steering Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->steering_motor->joint->type);
       }
-      if (leg->deployment_motor->joint->type == urdf::Joint::REVOLUTE ||
-          leg->deployment_motor->joint->type == urdf::Joint::CONTINUOUS)
+      if (leg->deployment_motor->joint->type != urdf::Joint::REVOLUTE &&
+          leg->deployment_motor->joint->type != urdf::Joint::CONTINUOUS)
       {
         RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->deployment_motor->joint->type);
       }
@@ -296,7 +296,7 @@ void LocomotionMode::enable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
                     std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  RCLCPP_DEBUG(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
+  RCLCPP_WARN(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
   if (enable())
   {
     enable_subscribers();
