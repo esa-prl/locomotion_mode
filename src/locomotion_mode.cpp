@@ -296,7 +296,7 @@ void LocomotionMode::enable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
                     std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
 {
-  RCLCPP_WARN(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
+  RCLCPP_INFO(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
   if (enable())
   {
     enable_subscribers();
