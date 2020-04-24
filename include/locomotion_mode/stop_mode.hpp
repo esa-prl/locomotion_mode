@@ -4,13 +4,13 @@
 #include "locomotion_mode/locomotion_mode.hpp"
 
 
-class StopMode: public LocomotionMode
+class StopMode : public LocomotionMode
 {
-  public:
-    StopMode(rclcpp::NodeOptions options, std::string node_name);
+public:
+  StopMode(rclcpp::NodeOptions options, std::string node_name);
 
-  private:
-    void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+private:
+  void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 };
 
 #endif

@@ -2,8 +2,8 @@
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
-  options.allow_undeclared_parameters(true).
-      automatically_declare_parameters_from_overrides(true)),
+    options.allow_undeclared_parameters(true).
+    automatically_declare_parameters_from_overrides(true)),
   // Protected
   node_name_(node_name),
   enabled_(false),
@@ -28,16 +28,25 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
 
   // Create Services
   enable_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "~/enable", std::bind(&LocomotionMode::enable_callback, this, std::placeholders::_1, std::placeholders::_2));
+    "~/enable",
+    std::bind(
+      &LocomotionMode::enable_callback, this, std::placeholders::_1,
+      std::placeholders::_2));
   disable_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "~/disable", std::bind(&LocomotionMode::disable_callback, this, std::placeholders::_1, std::placeholders::_2));
+    "~/disable",
+    std::bind(
+      &LocomotionMode::disable_callback, this, std::placeholders::_1,
+      std::placeholders::_2));
 
   // Create Publishers
-  joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>("joint_cmds", 10);
-  
+  joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>(
+    "joint_cmds", 10);
+
   // Create Subscriptions
   joint_state_subscription_ = this->create_subscription<sensor_msgs::msg::JointState>(
-    "joint_states", 10, std::bind(&LocomotionMode::joint_state_callback, this, std::placeholders::_1));
+    "joint_states", 10, std::bind(
+      &LocomotionMode::joint_state_callback, this,
+      std::placeholders::_1));
 
   RCLCPP_INFO(this->get_logger(), "LocomotionMode initialized");
 }
@@ -72,20 +81,21 @@ void LocomotionMode::load_params()
   std::regex regexp("\\.");
 
   // Loads joint positions of each pose
-  for( auto parameter_name : parameter_list) {
+  for (auto parameter_name : parameter_list) {
     if (!parameter_name.compare("NONE")) {
       RCLCPP_WARN(this->get_logger(), "POSE NONE");
-    }
-    else {
+    } else {
       // Gets tokens of the parameters
       std::vector<std::string> tokens(
-            std::sregex_token_iterator(parameter_name.begin(), parameter_name.end(), regexp, -1),
-            std::sregex_token_iterator()
-            );
+        std::sregex_token_iterator(parameter_name.begin(), parameter_name.end(), regexp, -1),
+        std::sregex_token_iterator()
+      );
 
       // Checks if the initial token of the parameter name matches the search prefix.
       if (tokens[0].compare(search_prefix)) {
-        RCLCPP_ERROR(this->get_logger(),"Search Prefix does not match parameter names. That should always match! Aborting.");
+        RCLCPP_ERROR(
+          this->get_logger(),
+          "Search Prefix does not match parameter names. That should always match! Aborting.");
         return;
       }
 
@@ -100,23 +110,23 @@ void LocomotionMode::load_params()
       }
 
       // Tries to save dep and str-positions into map.
-      try
-      {
+      try {
         // Checks where to save the positions of the given parameter
         if (!positions_name.compare("dep_positions")) {
-          poses_[pose_name]->dep_positions = parameters_client_->get_parameters({parameter_name})[0].as_double_array();
+          poses_[pose_name]->dep_positions =
+            parameters_client_->get_parameters({parameter_name})[0].as_double_array();
+        } else if (!positions_name.compare("str_positions")) {
+          poses_[pose_name]->str_positions =
+            parameters_client_->get_parameters({parameter_name})[0].as_double_array();
+        } else {
+          RCLCPP_ERROR(
+            this->get_logger(),
+            "Positions name: [%s] does neither match str_positions nor dep_positions. Double check your config file.\n");
         }
-        else if (!positions_name.compare("str_positions")) {
-          poses_[pose_name]->str_positions = parameters_client_->get_parameters({parameter_name})[0].as_double_array();  
-        }
-        else
-        {
-          RCLCPP_ERROR(this->get_logger(), "Positions name: [%s] does neither match str_positions nor dep_positions. Double check your config file.\n");
-        }
-      }
-      catch (...) {
-        RCLCPP_ERROR(this->get_logger(), "Did not find positions for pose with name: (%s)\n"
-         "Make sure that the array consists of floats.", parameter_name.c_str());
+      } catch (...) {
+        RCLCPP_ERROR(
+          this->get_logger(), "Did not find positions for pose with name: (%s)\n"
+          "Make sure that the array consists of floats.", parameter_name.c_str());
       }
     }
   }
@@ -125,29 +135,38 @@ void LocomotionMode::load_params()
   for (auto pose : poses_) {
     RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
     RCLCPP_DEBUG(this->get_logger(), "\tPose Name: (%s)", pose.first.c_str());
-    
+
     RCLCPP_DEBUG(this->get_logger(), "\tSteering Positions:");
-    for (unsigned i=0; i < pose.second->str_positions.size(); ++i) {
-      RCLCPP_DEBUG(this->get_logger(), "\t%s\t%f [RAD]", str_mapping_[i].c_str(), pose.second->str_positions[i]);
+    for (unsigned i = 0; i < pose.second->str_positions.size(); ++i) {
+      RCLCPP_DEBUG(
+        this->get_logger(), "\t%s\t%f [RAD]",
+        str_mapping_[i].c_str(), pose.second->str_positions[i]);
     }
 
     RCLCPP_DEBUG(this->get_logger(), "\tDeployment Positions:");
-    for (unsigned i=0; i < pose.second->dep_positions.size(); ++i) {
-      RCLCPP_DEBUG(this->get_logger(), "\t%s\t%f [RAD]", dep_mapping_[i].c_str(), pose.second->dep_positions[i]);
+    for (unsigned i = 0; i < pose.second->dep_positions.size(); ++i) {
+      RCLCPP_DEBUG(
+        this->get_logger(), "\t%s\t%f [RAD]",
+        dep_mapping_[i].c_str(), pose.second->dep_positions[i]);
     }
   }
   RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
 
   // Get names for enable and disable poses
   enable_pose_name_ = parameters_client_->get_parameters({"enable_pose_name"})[0].value_to_string();
-  disable_pose_name_ = parameters_client_->get_parameters({"disable_pose_name"})[0].value_to_string();
+  disable_pose_name_ =
+    parameters_client_->get_parameters({"disable_pose_name"})[0].value_to_string();
 
   if (poses_.count(enable_pose_name_) == 0) {
-    RCLCPP_ERROR(this->get_logger(), "Enable position name [%s] was not found in poses! Enable position was set to \"NONE\"", enable_pose_name_.c_str());
+    RCLCPP_ERROR(
+      this->get_logger(), "Enable position name [%s] was not found in poses! Enable position was set to \"NONE\"",
+      enable_pose_name_.c_str());
     enable_pose_name_ = "NONE";
   }
   if (poses_.count(disable_pose_name_) == 0) {
-    RCLCPP_ERROR(this->get_logger(), "Disable position name [%s] was not found in poses! Disable position was set to \"NONE\"", disable_pose_name_.c_str());
+    RCLCPP_ERROR(
+      this->get_logger(), "Disable position name [%s] was not found in poses! Disable position was set to \"NONE\"",
+      disable_pose_name_.c_str());
     disable_pose_name_ = "NONE";
   }
 }
@@ -156,66 +175,74 @@ void LocomotionMode::load_params()
 // Load Robot Model (URDF or XACRO)
 void LocomotionMode::load_robot_model()
 {
-    if (!model_->initFile(model_path_)){
-      RCLCPP_ERROR(this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.", model_path_.c_str());
-    }
-    else RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");
- 
-    // Get Links
-    model_->getLinks(links_);
+  if (!model_->initFile(model_path_)) {
+    RCLCPP_ERROR(
+      this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.",
+      model_path_.c_str());
+  } else {RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");}
 
-    // Loop through all links
-    for (std::shared_ptr<urdf::Link> link : links_) {
-      // Get Joints
-      if (link->child_joints.size() != 0) {
-        for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
-          joints_.push_back(child_joint);
-          // RCLCPP_INFO(this->get_logger(), "\t %s", child_joint->name.c_str());
-        }     
-      }
-  
-      // Look for Driving link and create leg of locomotion model
-      if (link->name.find(driving_name_) != std::string::npos) {
-        auto leg = std::make_shared<LocomotionMode::Leg>();
-        init_motor(leg->driving_motor, link);
+  // Get Links
+  model_->getLinks(links_);
 
-        // Find name for leg by keeping the last two digits of the joint name.
-        std::string leg_name = leg->driving_motor->joint->name;
-        leg_name.erase(leg_name.begin(), leg_name.end()-2);
-        leg->name = leg_name;
-
-
-        RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
-
-        if (leg->driving_motor->joint->type != urdf::Joint::REVOLUTE &&
-            leg->driving_motor->joint->type != urdf::Joint::CONTINUOUS)
-        {
-          RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->driving_motor->joint->type);
-        }
-
-        legs_.push_back(leg);
+  // Loop through all links
+  for (std::shared_ptr<urdf::Link> link : links_) {
+    // Get Joints
+    if (link->child_joints.size() != 0) {
+      for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
+        joints_.push_back(child_joint);
+        // RCLCPP_INFO(this->get_logger(), "\t %s", child_joint->name.c_str());
       }
     }
 
-    // Loop through all legs, find steering and deployment joints. Then save them into the leg.
-    for (auto leg : legs_)
+    // Look for Driving link and create leg of locomotion model
+    if (link->name.find(driving_name_) != std::string::npos) {
+      auto leg = std::make_shared<LocomotionMode::Leg>();
+      init_motor(leg->driving_motor, link);
+
+      // Find name for leg by keeping the last two digits of the joint name.
+      std::string leg_name = leg->driving_motor->joint->name;
+      leg_name.erase(leg_name.begin(), leg_name.end() - 2);
+      leg->name = leg_name;
+
+
+      RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
+
+      if (leg->driving_motor->joint->type != urdf::Joint::REVOLUTE &&
+        leg->driving_motor->joint->type != urdf::Joint::CONTINUOUS)
+      {
+        RCLCPP_WARN(
+          this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].",
+          leg->name.c_str(), leg->driving_motor->joint->type);
+      }
+
+      legs_.push_back(leg);
+    }
+  }
+
+  // Loop through all legs, find steering and deployment joints. Then save them into the leg.
+  for (auto leg : legs_) {
+    init_motor(
+      leg->steering_motor,
+      get_link_in_leg(leg->driving_motor->link, steering_name_));
+    init_motor(
+      leg->deployment_motor,
+      get_link_in_leg(leg->driving_motor->link, deployment_name_));
+
+    if (leg->steering_motor->joint->type != urdf::Joint::REVOLUTE &&
+      leg->steering_motor->joint->type != urdf::Joint::CONTINUOUS)
     {
-      init_motor(leg->steering_motor,
-        get_link_in_leg(leg->driving_motor->link, steering_name_));
-      init_motor(leg->deployment_motor,
-        get_link_in_leg(leg->driving_motor->link, deployment_name_));
-     
-      if (leg->steering_motor->joint->type != urdf::Joint::REVOLUTE &&
-          leg->steering_motor->joint->type != urdf::Joint::CONTINUOUS)
-      {
-        RCLCPP_WARN(this->get_logger(), "Steering Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->steering_motor->joint->type);
-      }
-      if (leg->deployment_motor->joint->type != urdf::Joint::REVOLUTE &&
-          leg->deployment_motor->joint->type != urdf::Joint::CONTINUOUS)
-      {
-        RCLCPP_WARN(this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].", leg->name.c_str(), leg->deployment_motor->joint->type);
-      }
+      RCLCPP_WARN(
+        this->get_logger(), "Steering Joint of Leg [%s] is of type [%u].",
+        leg->name.c_str(), leg->steering_motor->joint->type);
     }
+    if (leg->deployment_motor->joint->type != urdf::Joint::REVOLUTE &&
+      leg->deployment_motor->joint->type != urdf::Joint::CONTINUOUS)
+    {
+      RCLCPP_WARN(
+        this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].",
+        leg->name.c_str(), leg->deployment_motor->joint->type);
+    }
+  }
 }
 
 
@@ -224,45 +251,53 @@ void LocomotionMode::load_robot_model()
 void LocomotionMode::enable_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "rover_motion_cmd", 10, std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
+    "rover_motion_cmd", 10,
+    std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
 }
 
 // Disable the subscribers
 void LocomotionMode::disable_subscribers()
 {
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "rover_motion_cmd_disabled", 10, std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
+    "rover_motion_cmd_disabled", 10,
+    std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
 }
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
-bool LocomotionMode::transition_to_robot_pose(std::string pose_name) {
+bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
+{
   RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
   // Checks if pose_name is NONE and returns.
-  if (!pose_name.compare("NONE")) return true;
-  else {
+  if (!pose_name.compare("NONE")) {return true;} else {
     rover_msgs::msg::JointCommandArray joint_command_array_msg;
     rover_msgs::msg::JointCommand steering_msg;
     rover_msgs::msg::JointCommand deployment_msg;
-    
+
     // Loops through legs
     for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
 
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
-        // Finds desired motor index (int) based on motor name. 
-        int index = std::distance( str_mapping_.begin(), std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
+        // Finds desired motor index (int) based on motor name.
+        int index =
+          std::distance(
+          str_mapping_.begin(),
+          std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
 
         steering_msg.name = leg->steering_motor->joint->name;
         steering_msg.mode = ("POSITION");
         steering_msg.value = poses_[pose_name]->str_positions[index];
-        
+
         joint_command_array_msg.joint_command_array.push_back(steering_msg);
 
       }
       // Checks if leg is deployable
       if (leg->deployment_motor->joint) {
-        // Finds desired motor index (int) based on motor name. 
-        int index = std::distance( dep_mapping_.begin(), std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
+        // Finds desired motor index (int) based on motor name.
+        int index =
+          std::distance(
+          dep_mapping_.begin(),
+          std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
 
         deployment_msg.name = leg->deployment_motor->joint->name;
         deployment_msg.mode = ("POSITION");
@@ -282,11 +317,13 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name) {
 // enable() and disable() are called from the enable and disable callback. They return true or false depending if the the mode was successfully dis-/enabled.
 // enable() and disable() can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
 // Without overwrite they execute a transition to the en-/disable_pose and return if it was successful or not.
-bool LocomotionMode::enable() {
+bool LocomotionMode::enable()
+{
   return transition_to_robot_pose(enable_pose_name_);
 }
 
-bool LocomotionMode::disable() {
+bool LocomotionMode::disable()
+{
   return transition_to_robot_pose(disable_pose_name_);
 }
 
@@ -294,46 +331,46 @@ bool LocomotionMode::disable() {
 // Callback for the enable service
 void LocomotionMode::enable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
-                    std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
-  RCLCPP_INFO(this->get_logger(), "Enabeling %s.", node_name_.c_str());    
-  if (enable())
-  {
+  RCLCPP_INFO(this->get_logger(), "Enabeling %s.", node_name_.c_str());
+  if (enable()) {
     enable_subscribers();
     response->success = true;
     enabled_ = true;
-  }
-  else {
+  } else {
     response->success = false;
-    RCLCPP_WARN(this->get_logger(), "Could not enable locomotion mode: %s", node_name_.c_str());    
+    RCLCPP_WARN(this->get_logger(), "Could not enable locomotion mode: %s", node_name_.c_str());
   }
 }
 
 // Callback for the disable service
 void LocomotionMode::disable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
-                    std::shared_ptr<std_srvs::srv::Trigger::Response>      response)
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
-  RCLCPP_DEBUG(this->get_logger(), "Disabling %s.", node_name_.c_str());    
-  
+  RCLCPP_DEBUG(this->get_logger(), "Disabling %s.", node_name_.c_str());
+
   // disable the subscribers before starting the disablign proceedure, so no rover_velocity callbacks can interfere with the transition
   disable_subscribers();
-  
-  if (disable()){
+
+  if (disable()) {
     response->success = true;
     enabled_ = false;
-  }
-  else {
+  } else {
     response->success = false;
-    RCLCPP_WARN(this->get_logger(), "Could not properly disable locomotion mode: %s", node_name_.c_str());
+    RCLCPP_WARN(
+      this->get_logger(), "Could not properly disable locomotion mode: %s", node_name_.c_str());
   }
 }
 
 // Dummy Callback in case someone actually sends a message to the disabled topic.
 // TODO: There must be a better way to disable a subscription rather then just changing it's topic name to a new one.
 void LocomotionMode::rover_velocities_callback_disabled(
-  __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg) {
-  RCLCPP_WARN(this->get_logger(), "%s is disabled! Activate it before usage."
+  __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  RCLCPP_WARN(
+    this->get_logger(), "%s is disabled! Activate it before usage."
     "Why the f*** did you even send a message to this topic?!", node_name_.c_str());
 }
 
@@ -351,14 +388,18 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
 }
 
 // Define Link, joint and global position of a locomotion_mode motor.
-void LocomotionMode::init_motor(std::shared_ptr<LocomotionMode::Motor> &motor, std::shared_ptr<urdf::Link> link) {
+void LocomotionMode::init_motor(
+  std::shared_ptr<LocomotionMode::Motor> & motor,
+  std::shared_ptr<urdf::Link> link)
+{
   motor->link = link;
   motor->joint = link->parent_joint;
   motor->global_pose = get_parent_joint_position(link);
 }
 
 // Derive Position of Joint in static configuration
-urdf::Pose LocomotionMode::get_parent_joint_position(std::shared_ptr<urdf::Link> &link) {
+urdf::Pose LocomotionMode::get_parent_joint_position(std::shared_ptr<urdf::Link> & link)
+{
   // TODO: Potentially pass by value instaed of shared_ptr so we don't have to copy it.
   // Copy link so we don't overwrite the original one
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*link);
@@ -381,12 +422,12 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
   // Based on convention from Robot Dynamics of RSL@ETHZ. Also found on Hendriks RD-Summary
   urdf::Pose new_child;
 
-  double &e0 = parent.rotation.w;
-  double &e1 = parent.rotation.x;
-  double &e2 = parent.rotation.y;
-  double &e3 = parent.rotation.z;
+  double & e0 = parent.rotation.w;
+  double & e1 = parent.rotation.x;
+  double & e2 = parent.rotation.y;
+  double & e3 = parent.rotation.z;
 
-  // Populate rotation matrix from parent quaternion. 
+  // Populate rotation matrix from parent quaternion.
   double c11 = pow(e0, 2) + pow(e1, 2) - pow(e2, 2) - pow(e3, 2);
   double c12 = 2 * e1 * e2 - 2 * e0 * e3;
   double c13 = 2 * e0 * e2 + 2 * e1 * e3;
@@ -398,14 +439,17 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
   double c33 = pow(e0, 2) - pow(e1, 2) - pow(e2, 2) + pow(e3, 2);
 
   // Populate parent translation vector.
-  double &c14 = parent.position.x;
-  double &c24 = parent.position.y;
-  double &c34 = parent.position.z;
+  double & c14 = parent.position.x;
+  double & c24 = parent.position.y;
+  double & c34 = parent.position.z;
 
   // Compute transposed child by pos_child_in_parent_frame=_child_to_parent*pos_child_in_child_frame
-  new_child.position.x = c11 * child.position.x + c12 * child.position.y + c13 * child.position.z + c14 * 1;
-  new_child.position.y = c21 * child.position.x + c22 * child.position.y + c23 * child.position.z + c24 * 1;
-  new_child.position.z = c31 * child.position.x + c32 * child.position.y + c33 * child.position.z + c34 * 1;
+  new_child.position.x = c11 * child.position.x + c12 * child.position.y + c13 * child.position.z +
+    c14 * 1;
+  new_child.position.y = c21 * child.position.x + c22 * child.position.y + c23 * child.position.z +
+    c24 * 1;
+  new_child.position.z = c31 * child.position.x + c32 * child.position.y + c33 * child.position.z +
+    c34 * 1;
 
   // TODO Transform orientation
 
@@ -413,13 +457,15 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
 }
 
 // Find a link in the parents of the provided link which.
-// The link is found if the search_name is in the link_name. They don't have to match fully. 
-std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf::Link> &start_link, std::string name) {
+// The link is found if the search_name is in the link_name. They don't have to match fully.
+std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(
+  std::shared_ptr<urdf::Link> & start_link, std::string name)
+{
 
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
 
   while (tmp_link->parent_joint) {
-    if (tmp_link->parent_joint->name.find(name) != std::string::npos) break;
+    if (tmp_link->parent_joint->name.find(name) != std::string::npos) {break;}
     tmp_link = tmp_link->getParent();
   }
 
@@ -432,25 +478,30 @@ std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(std::shared_ptr<urdf
 void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
-    
-    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_)
-    {
-      for (std::shared_ptr<Motor> motor : leg->motors){
+
+    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
+      for (std::shared_ptr<Motor> motor : leg->motors) {
 
         if (motor->joint->name.compare(msg->name[i].c_str()) == 0) {
           RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
-          
-          motor->joint_state.header = msg->header;
-          if (!msg->position.empty()) motor->joint_state.position[0] = msg->position[i];
-          else RCLCPP_WARN(this->get_logger(), "Received no Position for Motor %s", msg->name[i].c_str());
 
-          if (!msg->velocity.empty()) motor->joint_state.velocity[0] = msg->velocity[i];
-          else RCLCPP_WARN(this->get_logger(), "Received no Veloctiy for Motor %s", msg->name[i].c_str());
-          
-          if (!msg->effort.empty())   motor->joint_state.effort[0]   = msg->effort[i];
+          motor->joint_state.header = msg->header;
+          if (!msg->position.empty()) {motor->joint_state.position[0] = msg->position[i];} else {
+            RCLCPP_WARN(
+              this->get_logger(), "Received no Position for Motor %s",
+              msg->name[i].c_str());
+          }
+
+          if (!msg->velocity.empty()) {motor->joint_state.velocity[0] = msg->velocity[i];} else {
+            RCLCPP_WARN(
+              this->get_logger(), "Received no Veloctiy for Motor %s",
+              msg->name[i].c_str());
+          }
+
+          if (!msg->effort.empty()) {motor->joint_state.effort[0] = msg->effort[i];}
           // else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
         }
-      } 
+      }
     }
   }
 }

@@ -24,163 +24,166 @@ using namespace std::chrono_literals;
 
 class LocomotionMode : public rclcpp::Node
 {
-  public:
-    LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
+public:
+  LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
 
-    // TODO: Inside this namespace? 
-    // TODO: What should be pointers, what not?
-    struct Motor
+  // TODO: Inside this namespace?
+  // TODO: What should be pointers, what not?
+  struct Motor
+  {
+    std::shared_ptr<urdf::Joint> joint;
+    std::shared_ptr<urdf::Link> link;
+    urdf::Pose global_pose;
+
+    sensor_msgs::msg::JointState joint_state;
+    Motor()
     {
-        std::shared_ptr<urdf::Joint> joint; 
-        std::shared_ptr<urdf::Link> link; 
-        urdf::Pose global_pose;
+      joint_state.name.resize(1);
+      joint_state.position.resize(1);
+      joint_state.velocity.resize(1);
+      joint_state.effort.resize(1);
+    }
+  };
 
-        sensor_msgs::msg::JointState joint_state;
-        Motor()
-        {
-            joint_state.name.resize(1);
-            joint_state.position.resize(1);
-            joint_state.velocity.resize(1);
-            joint_state.effort.resize(1);
-        }
-    };
+  struct Leg
+  {
+    // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
+    std::string name;
 
-    struct Leg
+    std::shared_ptr<Motor> driving_motor;
+    std::shared_ptr<Motor> steering_motor;
+    std::shared_ptr<Motor> deployment_motor;
+    std::vector<std::shared_ptr<Motor>> motors;
+
+    Leg()
+    : driving_motor(std::make_shared<Motor>()),
+      steering_motor(std::make_shared<Motor>()),
+      deployment_motor(std::make_shared<Motor>())
     {
-        // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
-        std::string name;
+      motors.push_back(driving_motor);
+      motors.push_back(steering_motor);
+      motors.push_back(deployment_motor);
+    }
+  };
 
-        std::shared_ptr<Motor> driving_motor;
-        std::shared_ptr<Motor> steering_motor;
-        std::shared_ptr<Motor> deployment_motor;
-        std::vector<std::shared_ptr<Motor>> motors;
+protected:
+  // Node name which should be set by derived class.
+  std::string node_name_;
 
-        Leg() :
-        driving_motor(std::make_shared<Motor>()),
-        steering_motor(std::make_shared<Motor>()),
-        deployment_motor(std::make_shared<Motor>())
-        {
-            motors.push_back(driving_motor);
-            motors.push_back(steering_motor);
-            motors.push_back(deployment_motor);
-        } 
-    };
+  // Node can only work if it is enabled.
+  bool enabled_;
 
-  protected:
-    // Node name which should be set by derived class.
-    std::string node_name_;
+  // Access parameters through the parameters_client_
+  std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
 
-    // Node can only work if it is enabled.
-    bool enabled_;
+  // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
+  // robot_pose_transition(TARGET_POSE)
+  // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
 
-    // Access parameters through the parameters_client_
-    std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
+  // TODO: Does this need to be defined here?
+  // Defines which positions are used in the enable and disable transition.
+  struct RobotPose
+  {
+    std::vector<double> str_positions;
+    std::vector<double> dep_positions;
+  };
+  std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
 
-    // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
-    // robot_pose_transition(TARGET_POSE)
-    // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
+  std::shared_ptr<LocomotionMode::RobotPose> enable_pose_;
+  std::shared_ptr<LocomotionMode::RobotPose> disable_pose_;
 
-    // TODO: Does this need to be defined here?
-    // Defines which positions are used in the enable and disable transition.
-    struct RobotPose
-    {
-        std::vector<double> str_positions;
-        std::vector<double> dep_positions;
-    };
-    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
+  std::string enable_pose_name_;
+  std::string disable_pose_name_;
 
-    std::shared_ptr<LocomotionMode::RobotPose> enable_pose_;
-    std::shared_ptr<LocomotionMode::RobotPose> disable_pose_;
+  std::vector<std::string> str_mapping_;
+  std::vector<std::string> dep_mapping_;
 
-    std::string enable_pose_name_;
-    std::string disable_pose_name_;
+  // Model
+  std::shared_ptr<urdf::Model> model_;
+  std::vector<std::shared_ptr<LocomotionMode::Leg>> legs_;
 
-    std::vector<std::string> str_mapping_;
-    std::vector<std::string> dep_mapping_;
+  // Joints Pulisher
+  rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
+  // Velocities Callback
+  virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 
-    // Model
-    std::shared_ptr<urdf::Model> model_;
-    std::vector<std::shared_ptr<LocomotionMode::Leg>> legs_;
+  // Load parameters
+  void load_params();
 
-    // Joints Pulisher
-    rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
-    // Velocities Callback
-    virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  // Load robot model (urdf)
+  void load_robot_model();
 
-    // Load parameters
-    void load_params();
+  // Initialize Messages
+  // rover_msgs::msg::JointCommand joint_command_;
+  rover_msgs::msg::JointCommandArray joint_command_array_;
 
-    // Load robot model (urdf)
-    void load_robot_model();
+  sensor_msgs::msg::JointState current_joint_state_;
 
-    // Initialize Messages
-    // rover_msgs::msg::JointCommand joint_command_;
-    rover_msgs::msg::JointCommandArray joint_command_array_;
+  // Initialize Subscriber with callback function from derived class
+  void enable_subscribers();
 
-    sensor_msgs::msg::JointState current_joint_state_;
+  // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
+  void disable_subscribers();
 
-    // Initialize Subscriber with callback function from derived class
-    void enable_subscribers();
+  // Prototype functions that can be overwritten by the derived class.
+  virtual bool enable();
+  virtual bool disable();
 
-    // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
-    void disable_subscribers();
+  // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
+  // Robot pose consists of preprogrammed motor position and velocities.
+  bool transition_to_robot_pose(std::string transition_name);
 
-    // Prototype functions that can be overwritten by the derived class.
-    virtual bool enable();
-    virtual bool disable();
+private:
+  // Services Objects
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
 
-    // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
-    // Robot pose consists of preprogrammed motor position and velocities.
-    bool transition_to_robot_pose(std::string transition_name);
+  // Services Callbacks
+  void enable_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  void disable_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
-  private:
+  // Rover Velocities Subscription
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;
 
-    // Services Objects
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_service_;
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
- 
-    // Services Callbacks
-    void enable_callback(const std_srvs::srv::Trigger::Request::SharedPtr   request,
-            std::shared_ptr<std_srvs::srv::Trigger::Response>      response);
-    void disable_callback(const std_srvs::srv::Trigger::Request::SharedPtr request,
-            std::shared_ptr<std_srvs::srv::Trigger::Response>     response);
+  // Joint States Subscription
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
 
-    // Rover Velocities Subscription
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;    
+  // Joint States Callback
+  void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-    // Joint States Subscription
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
+  // Disabled Callback
+  void rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg);
 
-    // Joint States Callback
-    void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
+  // URDF Model
+  std::string model_name_;
+  std::string model_dir_;
+  std::string model_path_;
 
-    // Disabled Callback
-    void rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg);
+  std::string driving_name_;
+  std::string steering_name_;
+  std::string deployment_name_;
 
-    // URDF Model
-    std::string model_name_;
-    std::string model_dir_;
-    std::string model_path_;
+  std::vector<std::shared_ptr<urdf::Joint>> joints_;
+  std::vector<std::shared_ptr<urdf::Link>> links_;
 
-    std::string driving_name_;
-    std::string steering_name_;
-    std::string deployment_name_;
+  void init_motor(std::shared_ptr<LocomotionMode::Motor> & motor, std::shared_ptr<urdf::Link> link);
 
-    std::vector<std::shared_ptr<urdf::Joint>> joints_;
-    std::vector<std::shared_ptr<urdf::Link>> links_;
+  // Find first joint in leg, which name contains the specified name
+  std::shared_ptr<urdf::Link> get_link_in_leg(
+    std::shared_ptr<urdf::Link> & start_link,
+    std::string name);
 
-    void init_motor(std::shared_ptr<LocomotionMode::Motor> &motor, std::shared_ptr<urdf::Link> link);
+  urdf::Pose get_parent_joint_position(std::shared_ptr<urdf::Link> & link);
 
-    // Find first joint in leg, which name contains the specified name
-    std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> &start_link, std::string name);  
-
-    urdf::Pose get_parent_joint_position(std::shared_ptr<urdf::Link> &link);
-
-    urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
+  urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
 
 
-    // Parameters
-    // string mode_name_;
+  // Parameters
+  // string mode_name_;
 
 };
 
