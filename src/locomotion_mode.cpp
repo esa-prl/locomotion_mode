@@ -62,15 +62,15 @@ void LocomotionMode::load_params()
     RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
   }
 
-  // Loads urdf model path
+  // Load urdf model path
   model_path_ = parameters_client_->get_parameters({"urdf_model_path"})[0].value_to_string();
 
   //// LOAD POSES
   std::string search_prefix = "poses";
-  // Finds all parameters which are prefixed by the search prefix
+  // Find all parameters which are prefixed by the search prefix
   std::vector<std::string> parameter_list = this->list_parameters({search_prefix}, 3).names;
 
-  // Loads joint mapping
+  // Load joint mapping
   str_mapping_ = parameters_client_->get_parameters({"str_mapping"})[0].as_string_array();
   dep_mapping_ = parameters_client_->get_parameters({"dep_mapping"})[0].as_string_array();
 
@@ -91,7 +91,7 @@ void LocomotionMode::load_params()
         std::sregex_token_iterator()
       );
 
-      // Checks if the initial token of the parameter name matches the search prefix.
+      // Check if the initial token of the parameter name matches the search prefix.
       if (tokens[0].compare(search_prefix)) {
         RCLCPP_ERROR(
           this->get_logger(),
@@ -103,15 +103,15 @@ void LocomotionMode::load_params()
       std::string pose_name = tokens[1];
       std::string positions_name = tokens[2];
 
-      // Checks if the the pose already exists
+      // Check if the the pose already exists
       if (poses_.count(pose_name) == 0) {
         // Creates pose and saves it into the map.
         poses_[pose_name] = std::make_shared<LocomotionMode::RobotPose>();
       }
 
-      // Tries to save dep and str-positions into map.
+      // Try to save dep and str-positions into map.
       try {
-        // Checks where to save the positions of the given parameter
+        // Check where to save the positions of the given parameter
         if (!positions_name.compare("dep_positions")) {
           poses_[pose_name]->dep_positions =
             parameters_client_->get_parameters({parameter_name})[0].as_double_array();
@@ -131,7 +131,7 @@ void LocomotionMode::load_params()
     }
   }
 
-  // Prints Poses for Validation
+  // Print Poses for Validation
   for (auto pose : poses_) {
     RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
     RCLCPP_DEBUG(this->get_logger(), "\tPose Name: (%s)", pose.first.c_str());
