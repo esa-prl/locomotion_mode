@@ -44,6 +44,8 @@ target_include_directories(${PROJECT_NAME}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+
 # copy public headers to destination
 install(
   DIRECTORY include/
@@ -63,7 +65,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
 
-## Add additional Locomotion Modes
+#  Add additional Locomotion Modes
 find_package(locomotion_mode REQUIRED)
 
 # Add executables
