@@ -63,7 +63,7 @@ void LocomotionMode::load_params()
   }
 
   // Load urdf model path
-  model_path_ = parameters_client_->get_parameters({"urdf_model_path"})[0].value_to_string();
+  model_path_ = parameters_client_->get_parameters({"robot_description"})[0].value_to_string();
 
   //// LOAD POSES
   std::string search_prefix = "poses";
