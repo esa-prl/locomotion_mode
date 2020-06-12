@@ -20,6 +20,7 @@ KNOWN BUGS
 
 0.0.1 (unreleased)
 ------------------
+* fixed name of file
 * added generic poses that can be used in transitions or otherwise.
 * implemented real services for enabling and disabling of locomotion mode
 * Added README.

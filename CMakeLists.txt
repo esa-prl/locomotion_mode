@@ -65,17 +65,14 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_include_directories(include)
 ament_export_dependencies(${dependencies})
 
-#  Add additional Locomotion Modes
-find_package(locomotion_mode REQUIRED)
-
+# Add additional Locomotion Modes
 # Add executables
 add_executable(stop_mode_node src/stop_mode.cpp)
-ament_target_dependencies(stop_mode_node ${PROJECT_NAME})
+target_link_libraries(stop_mode_node ${PROJECT_NAME})
 
 # install nodes
 install(TARGETS
   stop_mode_node
   DESTINATION lib/${PROJECT_NAME})
-
 
 ament_package()
