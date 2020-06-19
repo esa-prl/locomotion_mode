@@ -159,8 +159,6 @@ private:
   void rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg);
 
   // URDF Model
-  std::string model_name_;
-  std::string model_dir_;
   std::string model_path_;
 
   std::string driving_name_;
@@ -175,7 +173,7 @@ private:
   // Find first joint in leg, which name contains the specified name
   std::shared_ptr<urdf::Link> get_link_in_leg(
     std::shared_ptr<urdf::Link> & start_link,
-    std::string name);
+    std::string search_name);
 
   urdf::Pose get_parent_joint_position(std::shared_ptr<urdf::Link> & link);
 

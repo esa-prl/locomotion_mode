@@ -14,9 +14,7 @@ NICE TO HAVE
 
 KNOWN BUGS
 ----------
-* The package does not find itself when building for the first time. Thus the last parts of the CMakeLists have to commented out, the package built and then the lines can be uncommented again and the package will build successfully
 * Enable pose transition does not work at the first mode activation
-* robot_state_publisher still prints messages after removing output='screen' in launch file.
 
 0.0.1 (unreleased)
 ------------------

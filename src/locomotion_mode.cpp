@@ -179,7 +179,10 @@ void LocomotionMode::load_robot_model()
     RCLCPP_ERROR(
       this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.",
       model_path_.c_str());
-  } else {RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");}
+  }
+  else {
+    RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");
+  }
 
   // Get Links
   model_->getLinks(links_);
@@ -459,13 +462,16 @@ urdf::Pose LocomotionMode::transpose_pose(urdf::Pose parent, urdf::Pose child)
 // Find a link in the parents of the provided link which.
 // The link is found if the search_name is in the link_name. They don't have to match fully.
 std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(
-  std::shared_ptr<urdf::Link> & start_link, std::string name)
+  std::shared_ptr<urdf::Link> & start_link, std::string search_name)
 {
 
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
 
   while (tmp_link->parent_joint) {
-    if (tmp_link->parent_joint->name.find(name) != std::string::npos) {break;}
+    // If the search_name is found within the link name the search is aborted and said link is returned
+    if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
+      break;
+    }
     tmp_link = tmp_link->getParent();
   }
 
