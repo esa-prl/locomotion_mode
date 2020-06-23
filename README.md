@@ -30,8 +30,8 @@ The locomotion_mode package has been tested under [ROS2] Eloquent and Ubuntu 18.
 #### Dependencies
 
 - [Robot Operating System (ROS)](http://wiki.ros.org) (middleware for robotics),
-- [rover_msgs] (message definitions for ESA-PRL rovers)
-- [rover_config] (config files and models for ESA-PRL rovers)
+- ([rover_msgs]) (message definitions for ESA-PRL rovers)
+- ([rover_config]) (config files and models for ESA-PRL rovers)
 - [urdf](http://wiki.ros.org/urdf)
 
 #### Building
