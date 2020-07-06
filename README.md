@@ -19,7 +19,7 @@ The source code is released under a [GPLv3 license](https://www.gnu.org/licenses
 
 **Author: Miro Voellmy<br />
 Affiliation: [European Space Agency](https://www.esa.int/)<br />
-Maintainer: Miro Voellmy, miro.voellmy@esa.com**
+Maintainer: Miro Voellmy, miro.voellmy@esa.int**
 
 The locomotion_mode package has been tested under [ROS2] Foxy Fitzroy and Ubuntu 20.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
