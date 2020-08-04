@@ -21,7 +21,6 @@
 
 using namespace std::chrono_literals;
 
-
 class LocomotionMode : public rclcpp::Node
 {
 public:
@@ -116,8 +115,6 @@ protected:
   // Initialize Messages
   // rover_msgs::msg::JointCommand joint_command_;
   rover_msgs::msg::JointCommandArray joint_command_array_;
-
-  sensor_msgs::msg::JointState current_joint_state_;
 
   // Initialize Subscriber with callback function from derived class
   void enable_subscribers();

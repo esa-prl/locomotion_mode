@@ -3,13 +3,6 @@
 StopMode::StopMode(rclcpp::NodeOptions options, std::string node_name)
 : LocomotionMode(options, node_name)
 {
-  // Create Subscription and callback to derived class method
-  if (this->enabled_) {
-    this->enable_subscribers();
-  }
-
-  RCLCPP_INFO(this->get_logger(), "StopModeNode started.");
-
 }
 
 void StopMode::rover_velocities_callback(

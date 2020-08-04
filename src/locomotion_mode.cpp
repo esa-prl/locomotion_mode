@@ -11,7 +11,6 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   enable_pose_(std::make_shared<RobotPose>()),
   disable_pose_(std::make_shared<RobotPose>()),
   model_(new urdf::Model()),
-  current_joint_state_(),
   // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"),
@@ -48,7 +47,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
       &LocomotionMode::joint_state_callback, this,
       std::placeholders::_1));
 
-  RCLCPP_INFO(this->get_logger(), "LocomotionMode initialized");
+  RCLCPP_INFO(this->get_logger(), "%s STARTED.", node_name.c_str());
 }
 
 // Load Parameters
