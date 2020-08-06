@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>Package contains base class which provides interfaces to the rover pipeline.</description>
   <maintainer email="miro.voellmy@esa.int">Miro Voellmy</maintainer>
-  <license>TODO: License declaration</license>
+  <license>GPLv3</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
