@@ -270,7 +270,11 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
 {
   RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
   // Checks if pose_name is NONE and returns.
-  if (!pose_name.compare("NONE")) {return true;} else {
+  if (!pose_name.compare("NONE"))
+  {
+    return true;
+  }
+  else {
     rover_msgs::msg::JointCommandArray joint_command_array_msg;
     rover_msgs::msg::JointCommand steering_msg;
     rover_msgs::msg::JointCommand deployment_msg;
