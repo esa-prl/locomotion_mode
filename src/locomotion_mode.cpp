@@ -223,26 +223,21 @@ void LocomotionMode::load_robot_model()
 
   // Loop through all legs, find steering and deployment joints. Then save them into the leg.
   for (auto leg : legs_) {
-    init_motor(
-      leg->steering_motor,
-      get_link_in_leg(leg->driving_motor->link, steering_name_));
-    init_motor(
-      leg->deployment_motor,
-      get_link_in_leg(leg->driving_motor->link, deployment_name_));
 
-    if (leg->steering_motor->joint->type != urdf::Joint::REVOLUTE &&
-      leg->steering_motor->joint->type != urdf::Joint::CONTINUOUS)
+    if (!init_motor(leg->steering_motor,
+                   get_link_in_leg(leg->driving_motor->link, steering_name_)))
     {
-      RCLCPP_WARN(
-        this->get_logger(), "Steering Joint of Leg [%s] is of type [%u].",
-        leg->name.c_str(), leg->steering_motor->joint->type);
+      RCLCPP_INFO(
+        this->get_logger(), "Leg [%s] is not steerable.",
+        leg->name.c_str());
     }
-    if (leg->deployment_motor->joint->type != urdf::Joint::REVOLUTE &&
-      leg->deployment_motor->joint->type != urdf::Joint::CONTINUOUS)
+
+    if (!init_motor(leg->deployment_motor,
+                   get_link_in_leg(leg->driving_motor->link, deployment_name_)))
     {
-      RCLCPP_WARN(
-        this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].",
-        leg->name.c_str(), leg->deployment_motor->joint->type);
+      RCLCPP_INFO(
+        this->get_logger(), "Leg [%s] is not deployable.",
+        leg->name.c_str());
     }
   }
 }
@@ -394,13 +389,27 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
 }
 
 // Define Link, joint and global position of a locomotion_mode motor.
-void LocomotionMode::init_motor(
+bool LocomotionMode::init_motor(
   std::shared_ptr<LocomotionMode::Motor> & motor,
   std::shared_ptr<urdf::Link> link)
 {
-  motor->link = link;
-  motor->joint = link->parent_joint;
-  motor->global_pose = get_parent_joint_position(link);
+  // It can only be a motor if it is a revolute, continuous or prismatic joint
+  if (link->parent_joint->type == urdf::Joint::REVOLUTE ||
+      link->parent_joint->type == urdf::Joint::CONTINUOUS ||
+      link->parent_joint->type == urdf::Joint::PRISMATIC)
+  {
+    motor->link = link;
+    motor->joint = link->parent_joint;
+    motor->global_pose = get_parent_joint_position(link);
+
+    return true;
+  }
+  else
+  {
+    RCLCPP_DEBUG(this->get_logger(), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
+    return false;
+  }
+
 }
 
 // Derive Position of Joint in static configuration
@@ -472,6 +481,7 @@ std::shared_ptr<urdf::Link> LocomotionMode::get_link_in_leg(
 
   while (tmp_link->parent_joint) {
     // If the search_name is found within the link name the search is aborted and said link is returned
+    // TODO: Insert regex here
     if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
       break;
     }
@@ -490,25 +500,28 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
 
     for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
       for (std::shared_ptr<Motor> motor : leg->motors) {
+        // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
+        if (motor->joint)
+        {
+          if (motor->joint->name.compare(msg->name[i].c_str()) == 0) {
+            RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
 
-        if (motor->joint->name.compare(msg->name[i].c_str()) == 0) {
-          RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
+            motor->joint_state.header = msg->header;
+            if (!msg->position.empty()) {motor->joint_state.position[0] = msg->position[i];} else {
+              RCLCPP_WARN(
+                this->get_logger(), "Received no Position for Motor %s",
+                msg->name[i].c_str());
+            }
 
-          motor->joint_state.header = msg->header;
-          if (!msg->position.empty()) {motor->joint_state.position[0] = msg->position[i];} else {
-            RCLCPP_WARN(
-              this->get_logger(), "Received no Position for Motor %s",
-              msg->name[i].c_str());
+            if (!msg->velocity.empty()) {motor->joint_state.velocity[0] = msg->velocity[i];} else {
+              RCLCPP_WARN(
+                this->get_logger(), "Received no Veloctiy for Motor %s",
+                msg->name[i].c_str());
+            }
+
+            if (!msg->effort.empty()) {motor->joint_state.effort[0] = msg->effort[i];}
+            // else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
           }
-
-          if (!msg->velocity.empty()) {motor->joint_state.velocity[0] = msg->velocity[i];} else {
-            RCLCPP_WARN(
-              this->get_logger(), "Received no Veloctiy for Motor %s",
-              msg->name[i].c_str());
-          }
-
-          if (!msg->effort.empty()) {motor->joint_state.effort[0] = msg->effort[i];}
-          // else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
         }
       }
     }

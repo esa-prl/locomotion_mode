@@ -165,7 +165,7 @@ private:
   std::vector<std::shared_ptr<urdf::Joint>> joints_;
   std::vector<std::shared_ptr<urdf::Link>> links_;
 
-  void init_motor(std::shared_ptr<LocomotionMode::Motor> & motor, std::shared_ptr<urdf::Link> link);
+  bool init_motor(std::shared_ptr<LocomotionMode::Motor> & motor, std::shared_ptr<urdf::Link> link);
 
   // Find first joint in leg, which name contains the specified name
   std::shared_ptr<urdf::Link> get_link_in_leg(
