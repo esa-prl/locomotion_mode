@@ -199,23 +199,20 @@ void LocomotionMode::load_robot_model()
     // Look for Driving link and create leg of locomotion model
     if (link->name.find(driving_name_) != std::string::npos) {
       auto leg = std::make_shared<LocomotionMode::Leg>();
-      init_motor(leg->driving_motor, link);
+      
+      if (!init_motor(leg->driving_motor, link))
+      {
+        RCLCPP_WARN(
+          this->get_logger(), "Persumed driving joint of leg [%s] is of type [%u].",
+          leg->driving_motor->joint->name.c_str(), leg->driving_motor->joint->type);
+      }
 
       // Find name for leg by keeping the last two digits of the joint name.
       std::string leg_name = leg->driving_motor->joint->name;
       leg_name.erase(leg_name.begin(), leg_name.end() - 2);
       leg->name = leg_name;
 
-
       RCLCPP_DEBUG(this->get_logger(), "LEG_NAME: [%s]", leg->name.c_str());
-
-      if (leg->driving_motor->joint->type != urdf::Joint::REVOLUTE &&
-        leg->driving_motor->joint->type != urdf::Joint::CONTINUOUS)
-      {
-        RCLCPP_WARN(
-          this->get_logger(), "Driving Joint of Leg [%s] is of type [%u].",
-          leg->name.c_str(), leg->driving_motor->joint->type);
-      }
 
       legs_.push_back(leg);
     }
