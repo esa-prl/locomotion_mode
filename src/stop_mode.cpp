@@ -1,5 +1,7 @@
 #include "locomotion_mode/stop_mode.hpp"
 
+using namespace locomotion_mode;
+
 StopMode::StopMode(rclcpp::NodeOptions options, std::string node_name)
 : LocomotionMode(options, node_name)
 {

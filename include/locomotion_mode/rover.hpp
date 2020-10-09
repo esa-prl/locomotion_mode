@@ -6,7 +6,7 @@
 #include <urdf/model.h>
 
 
-namespace RoverNS{
+namespace locomotion_mode{
 
   // TODO: Place inside Rover class
   struct Motor
@@ -51,7 +51,7 @@ namespace RoverNS{
   public:
     Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model);
     // Legs
-    std::vector<std::shared_ptr<RoverNS::Leg>> legs_;
+    std::vector<std::shared_ptr<Leg>> legs_;
     
     bool parse_model();
 
@@ -67,7 +67,7 @@ namespace RoverNS{
     std::string steering_name_;
     std::string deployment_name_;
 
-    bool init_motor(std::shared_ptr<RoverNS::Motor> & motor, std::shared_ptr<urdf::Link> link);
+    bool init_motor(std::shared_ptr<Motor> & motor, std::shared_ptr<urdf::Link> link);
 
     // Find first joint in leg, which name contains the specified name
     std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> & start_link, std::string search_name);

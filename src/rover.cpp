@@ -1,7 +1,7 @@
 #include <locomotion_mode/rover.hpp>
 #include "rclcpp/rclcpp.hpp"
 
-using namespace RoverNS;
+using namespace locomotion_mode;
 
 Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model) {
 
@@ -36,7 +36,7 @@ bool Rover::parse_model() {
     // Look for Driving link and create leg of locomotion model
     if (link->name.find(driving_name_) != std::string::npos) {
 
-      auto leg = std::make_shared<RoverNS::Leg>();
+      auto leg = std::make_shared<Leg>();
       
 
       if (!init_motor(leg->driving_motor, link))
@@ -82,7 +82,7 @@ bool Rover::parse_model() {
 
 // Define Link, joint and global position of a locomotion_mode motor.
 bool Rover::init_motor(
-  std::shared_ptr<RoverNS::Motor> & motor,
+  std::shared_ptr<Motor> & motor,
   std::shared_ptr<urdf::Link> link)
 {
 

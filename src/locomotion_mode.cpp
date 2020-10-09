@@ -1,5 +1,7 @@
 #include "locomotion_mode/locomotion_mode.hpp"
 
+using namespace locomotion_mode;
+
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
     options.allow_undeclared_parameters(true).
@@ -182,11 +184,10 @@ void LocomotionMode::load_robot_model()
     RCLCPP_INFO(this->get_logger(), "URDF file loaded successfully.");
   }
 
-  rover_.reset(new RoverNS::Rover(driving_name_, steering_name_, deployment_name_, model_));
+  rover_.reset(new Rover(driving_name_, steering_name_, deployment_name_, model_));
   
   rover_->parse_model();
 }
-
 
 // Function to be called from the derived class while it is being initialized.
 // Creates a subscriber using the (now by derived class overwritten) callback function
@@ -220,7 +221,7 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
     rover_msgs::msg::JointCommand deployment_msg;
 
     // Loops through legs
-    for (std::shared_ptr<RoverNS::Leg> leg : rover_->legs_) {
+    for (std::shared_ptr<Leg> leg : rover_->legs_) {
 
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
@@ -340,8 +341,8 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
 
-    for (std::shared_ptr<RoverNS::Leg> leg : rover_->legs_) {
-      for (std::shared_ptr<RoverNS::Motor> motor : leg->motors) {
+    for (std::shared_ptr<Leg> leg : rover_->legs_) {
+      for (std::shared_ptr<Motor> motor : leg->motors) {
         // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
         if (motor->joint)
         {
