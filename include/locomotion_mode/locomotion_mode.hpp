@@ -69,7 +69,6 @@ namespace locomotion_mode {
     std::shared_ptr<Rover> rover_;
 
     std::shared_ptr<urdf::Model> model_;
-    std::vector<std::shared_ptr<Leg>> legs_;
 
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;

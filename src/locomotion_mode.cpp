@@ -221,7 +221,7 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
     rover_msgs::msg::JointCommand deployment_msg;
 
     // Loops through legs
-    for (std::shared_ptr<Leg> leg : rover_->legs_) {
+    for (auto leg : rover_->legs_) {
 
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
@@ -341,8 +341,8 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
 
-    for (std::shared_ptr<Leg> leg : rover_->legs_) {
-      for (std::shared_ptr<Motor> motor : leg->motors) {
+    for (auto leg : rover_->legs_) {
+      for (auto motor : leg->motors) {
         // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
         if (motor->joint)
         {

@@ -18,6 +18,25 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   model_ = model;
 }
 
+Rover::Motor::Motor()
+{
+  joint_state.name.resize(1);
+  joint_state.position.resize(1);
+  joint_state.velocity.resize(1);
+  joint_state.effort.resize(1);
+}
+
+Rover::Leg::Leg():
+  driving_motor(std::make_shared<Motor>()),
+  steering_motor(std::make_shared<Motor>()),
+  deployment_motor(std::make_shared<Motor>())
+{
+  motors.push_back(driving_motor);
+  motors.push_back(steering_motor);
+  motors.push_back(deployment_motor);
+}
+
+
 bool Rover::parse_model() {
 
   model_->getLinks(links_);
