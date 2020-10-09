@@ -64,8 +64,10 @@ protected:
   std::vector<std::string> dep_mapping_;
 
   // Model
+  RoverNS::Rover rover_;
+
   std::shared_ptr<urdf::Model> model_;
-  std::vector<std::shared_ptr<Rover::Leg>> legs_;
+  std::vector<std::shared_ptr<RoverNS::Leg>> legs_;
 
   // Joints Pulisher
   rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
@@ -127,21 +129,6 @@ private:
   std::string driving_name_;
   std::string steering_name_;
   std::string deployment_name_;
-
-  std::vector<std::shared_ptr<urdf::Joint>> joints_;
-  std::vector<std::shared_ptr<urdf::Link>> links_;
-
-  bool init_motor(std::shared_ptr<Rover::Motor> & motor, std::shared_ptr<urdf::Link> link);
-
-  // Find first joint in leg, which name contains the specified name
-  std::shared_ptr<urdf::Link> get_link_in_leg(
-    std::shared_ptr<urdf::Link> & start_link,
-    std::string search_name);
-
-  urdf::Pose get_parent_joint_position(std::shared_ptr<urdf::Link> & link);
-
-  urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
-
 
   // Parameters
   // string mode_name_;

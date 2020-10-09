@@ -1,1 +1,205 @@
 #include <locomotion_mode/rover.hpp>
+#include "rclcpp/rclcpp.hpp"
+
+using namespace RoverNS;
+
+Rover::Rover(std::shared_ptr<urdf::Model> model):
+  joints_(),
+  links_()
+ {
+  model_ = model;
+
+  if (parse_model()) {
+    RCLCPP_INFO(rclcpp::get_logger("rover_parser"),"Model successfully parsed.");
+  }
+}
+
+Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name) {
+
+  if (driving_name.empty() || steering_name.empty() || deployment_name.empty()) {
+    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Identification strings is/are empty.");
+    RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
+      "Driving: [%s]\nSteering: [%s]\nDeployment: [%s]",
+      driving_name.c_str(), steering_name.c_str(), deployment_name.c_str());
+  }
+  driving_name_ = driving_name;
+  steering_name_ = steering_name;
+  deployment_name_ = deployment_name;
+
+}
+
+std::vector<std::shared_ptr<RoverNS::Leg>> Rover::get_legs() {return legs_;}
+
+bool Rover::parse_model(std::shared_ptr<urdf::Model> model) {
+  model_ = model;
+  return parse_model();
+}
+
+bool Rover::parse_model() {
+
+  model_->getLinks(links_);
+
+  // Loop through all links
+  for (std::shared_ptr<urdf::Link> link : links_) {
+    // Get Joints
+    if (link->child_joints.size() != 0) {
+
+      for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
+        joints_.push_back(child_joint);
+        // RCLCPP_INFO(rclcpp::get_logger("rover_parser"), "\t %s", child_joint->name.c_str());
+      }
+    }
+
+    // Look for Driving link and create leg of locomotion model
+    if (link->name.find(driving_name_) != std::string::npos) {
+
+      auto leg = std::make_shared<RoverNS::Leg>();
+      
+
+      if (!init_motor(leg->driving_motor, link))
+      {
+        RCLCPP_WARN(
+          rclcpp::get_logger("rover_parser"), "Persumed driving joint of leg [%s] is of type [%u].",
+          leg->driving_motor->joint->name.c_str(), leg->driving_motor->joint->type);
+      }
+
+      // Find name for leg by keeping the last two digits of the joint name.
+      std::string leg_name = leg->driving_motor->joint->name;
+      leg_name.erase(leg_name.begin(), leg_name.end() - 2);
+      leg->name = leg_name;
+
+      RCLCPP_DEBUG(rclcpp::get_logger("rover_parser"), "LEG_NAME: [%s]", leg->name.c_str());
+
+      legs_.push_back(leg);
+    }
+  }
+
+  // Loop through all legs, find steering and deployment joints. Then save them into the leg.
+  for (auto leg : legs_) {
+
+    if (!init_motor(leg->steering_motor,
+                   get_link_in_leg(leg->driving_motor->link, steering_name_)))
+    {
+      RCLCPP_INFO(
+        rclcpp::get_logger("rover_parser"), "Leg [%s] is not steerable.",
+        leg->name.c_str());
+    }
+
+    if (!init_motor(leg->deployment_motor,
+                   get_link_in_leg(leg->driving_motor->link, deployment_name_)))
+    {
+      RCLCPP_INFO(
+        rclcpp::get_logger("rover_parser"), "Leg [%s] is not deployable.",
+        leg->name.c_str());
+    }
+  }
+
+  return true;
+}
+
+
+
+// Define Link, joint and global position of a locomotion_mode motor.
+bool Rover::init_motor(
+  std::shared_ptr<RoverNS::Motor> & motor,
+  std::shared_ptr<urdf::Link> link)
+{
+
+
+  // It can only be a motor if it is a revolute, continuous or prismatic joint
+  if (link->parent_joint->type == urdf::Joint::REVOLUTE ||
+      link->parent_joint->type == urdf::Joint::CONTINUOUS ||
+      link->parent_joint->type == urdf::Joint::PRISMATIC)
+  {
+    motor->link = link;
+    motor->joint = link->parent_joint;
+    motor->global_pose = get_parent_joint_position(link);
+
+    return true;
+  }
+  else
+  {
+    RCLCPP_DEBUG(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
+    return false;
+  }
+
+}
+
+// Find a link in the parents of the provided link which.
+// The link is found if the search_name is in the link_name. They don't have to match fully.
+std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
+  std::shared_ptr<urdf::Link> & start_link, std::string search_name)
+{
+
+  std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
+
+  while (tmp_link->parent_joint) {
+    // If the search_name is found within the link name the search is aborted and said link is returned
+    // TODO: Insert regex here
+    if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
+      break;
+    }
+    tmp_link = tmp_link->getParent();
+  }
+
+  return tmp_link;
+}
+
+// Derive Position of Joint in static configuration
+urdf::Pose Rover::get_parent_joint_position(std::shared_ptr<urdf::Link> & link)
+{
+  // TODO: Potentially pass by value instaed of shared_ptr so we don't have to copy it.
+  // Copy link so we don't overwrite the original one
+  std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*link);
+
+  urdf::Pose child_pose;
+
+  while (tmp_link->parent_joint) {
+    urdf::Pose parent_pose = tmp_link->parent_joint->parent_to_joint_origin_transform;
+
+    child_pose = transpose_pose(parent_pose, child_pose);
+
+    tmp_link = tmp_link->getParent();
+  }
+  return child_pose;
+}
+
+// Trasposes position of child pose into the coordinate frame of the parent pose.
+urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
+{
+  // Based on convention from Robot Dynamics of RSL@ETHZ. Also found on Hendriks RD-Summary
+  urdf::Pose new_child;
+
+  double & e0 = parent.rotation.w;
+  double & e1 = parent.rotation.x;
+  double & e2 = parent.rotation.y;
+  double & e3 = parent.rotation.z;
+
+  // Populate rotation matrix from parent quaternion.
+  double c11 = pow(e0, 2) + pow(e1, 2) - pow(e2, 2) - pow(e3, 2);
+  double c12 = 2 * e1 * e2 - 2 * e0 * e3;
+  double c13 = 2 * e0 * e2 + 2 * e1 * e3;
+  double c21 = 2 * e0 * e3 + 2 * e1 * e2;
+  double c22 = pow(e0, 2) - pow(e1, 2) + pow(e2, 2) - pow(e3, 2);
+  double c23 = 2 * e2 * e3 - 2 * e0 * e1;
+  double c31 = 2 * e1 * e3 - 2 * e0 * e2;
+  double c32 = 2 * e0 * e1 + 2 * e2 * e3;
+  double c33 = pow(e0, 2) - pow(e1, 2) - pow(e2, 2) + pow(e3, 2);
+
+  // Populate parent translation vector.
+  double & c14 = parent.position.x;
+  double & c24 = parent.position.y;
+  double & c34 = parent.position.z;
+
+  // Compute transposed child by pos_child_in_parent_frame=_child_to_parent*pos_child_in_child_frame
+  new_child.position.x = c11 * child.position.x + c12 * child.position.y + c13 * child.position.z +
+    c14 * 1;
+  new_child.position.y = c21 * child.position.x + c22 * child.position.y + c23 * child.position.z +
+    c24 * 1;
+  new_child.position.z = c31 * child.position.x + c32 * child.position.y + c33 * child.position.z +
+    c34 * 1;
+
+  // TODO Transform orientation
+
+  return new_child;
+}
