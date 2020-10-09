@@ -64,7 +64,7 @@ protected:
   std::vector<std::string> dep_mapping_;
 
   // Model
-  RoverNS::Rover rover_;
+  std::shared_ptr<RoverNS::Rover> rover_;
 
   std::shared_ptr<urdf::Model> model_;
   std::vector<std::shared_ptr<RoverNS::Leg>> legs_;

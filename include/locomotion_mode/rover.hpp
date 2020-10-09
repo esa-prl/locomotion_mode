@@ -8,6 +8,7 @@
 
 namespace RoverNS{
 
+  // TODO: Place inside Rover class
   struct Motor
   {
     std::shared_ptr<urdf::Joint> joint;
@@ -48,13 +49,10 @@ namespace RoverNS{
   class Rover
   {
   public:
-    Rover(){};
-    Rover(std::string driving_name, std::string steering_name, std::string deployment_name);
-    Rover(std::shared_ptr<urdf::Model> model);
-
-    std::vector<std::shared_ptr<RoverNS::Leg>> get_legs();
+    Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model);
+    // Legs
+    std::vector<std::shared_ptr<RoverNS::Leg>> legs_;
     
-    bool parse_model(std::shared_ptr<urdf::Model> model);
     bool parse_model();
 
   private:
@@ -65,13 +63,9 @@ namespace RoverNS{
     std::vector<std::shared_ptr<urdf::Joint>> joints_;
     std::vector<std::shared_ptr<urdf::Link>> links_;
 
-
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
-
-    // Legs
-    std::vector<std::shared_ptr<RoverNS::Leg>> legs_;
 
     bool init_motor(std::shared_ptr<RoverNS::Motor> & motor, std::shared_ptr<urdf::Link> link);
 

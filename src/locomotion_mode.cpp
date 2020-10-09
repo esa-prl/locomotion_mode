@@ -13,11 +13,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   model_(new urdf::Model()),
   // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
-  driving_name_("DRV"),
-  steering_name_("STR"),
-  deployment_name_("DEP"),
-  // rover_(driving_name_, steering_name_, deployment_name_)
-  rover_("DRV", "STR", "DEP")
+  driving_name_("DRV"), steering_name_("STR"), deployment_name_("DEP")
 {
   // Load Parameters
   load_params();
@@ -185,9 +181,10 @@ void LocomotionMode::load_robot_model()
   else {
     RCLCPP_INFO(this->get_logger(), "URDF file loaded successfully.");
   }
+
+  rover_.reset(new RoverNS::Rover(driving_name_, steering_name_, deployment_name_, model_));
   
-  rover_.parse_model(model_);
-  legs_ = rover_.get_legs();
+  rover_->parse_model();
 }
 
 
@@ -223,7 +220,7 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
     rover_msgs::msg::JointCommand deployment_msg;
 
     // Loops through legs
-    for (std::shared_ptr<RoverNS::Leg> leg : legs_) {
+    for (std::shared_ptr<RoverNS::Leg> leg : rover_->legs_) {
 
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
@@ -343,7 +340,7 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
 
-    for (std::shared_ptr<RoverNS::Leg> leg : legs_) {
+    for (std::shared_ptr<RoverNS::Leg> leg : rover_->legs_) {
       for (std::shared_ptr<RoverNS::Motor> motor : leg->motors) {
         // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
         if (motor->joint)

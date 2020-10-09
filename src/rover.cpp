@@ -3,18 +3,7 @@
 
 using namespace RoverNS;
 
-Rover::Rover(std::shared_ptr<urdf::Model> model):
-  joints_(),
-  links_()
- {
-  model_ = model;
-
-  if (parse_model()) {
-    RCLCPP_INFO(rclcpp::get_logger("rover_parser"),"Model successfully parsed.");
-  }
-}
-
-Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name) {
+Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model) {
 
   if (driving_name.empty() || steering_name.empty() || deployment_name.empty()) {
     RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Identification strings is/are empty.");
@@ -26,13 +15,7 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   steering_name_ = steering_name;
   deployment_name_ = deployment_name;
 
-}
-
-std::vector<std::shared_ptr<RoverNS::Leg>> Rover::get_legs() {return legs_;}
-
-bool Rover::parse_model(std::shared_ptr<urdf::Model> model) {
   model_ = model;
-  return parse_model();
 }
 
 bool Rover::parse_model() {
@@ -96,8 +79,6 @@ bool Rover::parse_model() {
 
   return true;
 }
-
-
 
 // Define Link, joint and global position of a locomotion_mode motor.
 bool Rover::init_motor(
