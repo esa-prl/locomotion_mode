@@ -13,7 +13,7 @@ void StopMode::rover_velocities_callback(
 
   rover_msgs::msg::JointCommand driving_msg;
 
-  for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
+  for (auto leg : legs_) {
 
     driving_msg.name = leg->driving_motor->joint->name;
     driving_msg.mode = ("VELOCITY");

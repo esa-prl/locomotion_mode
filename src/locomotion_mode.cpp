@@ -198,7 +198,7 @@ void LocomotionMode::load_robot_model()
 
     // Look for Driving link and create leg of locomotion model
     if (link->name.find(driving_name_) != std::string::npos) {
-      auto leg = std::make_shared<LocomotionMode::Leg>();
+      auto leg = std::make_shared<Rover::Leg>();
       
       if (!init_motor(leg->driving_motor, link))
       {
@@ -272,7 +272,7 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
     rover_msgs::msg::JointCommand deployment_msg;
 
     // Loops through legs
-    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
+    for (std::shared_ptr<Rover::Leg> leg : legs_) {
 
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
@@ -387,7 +387,7 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
 
 // Define Link, joint and global position of a locomotion_mode motor.
 bool LocomotionMode::init_motor(
-  std::shared_ptr<LocomotionMode::Motor> & motor,
+  std::shared_ptr<Rover::Motor> & motor,
   std::shared_ptr<urdf::Link> link)
 {
   // It can only be a motor if it is a revolute, continuous or prismatic joint
@@ -495,8 +495,8 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
 
-    for (std::shared_ptr<LocomotionMode::Leg> leg : legs_) {
-      for (std::shared_ptr<Motor> motor : leg->motors) {
+    for (std::shared_ptr<Rover::Leg> leg : legs_) {
+      for (std::shared_ptr<Rover::Motor> motor : leg->motors) {
         // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
         if (motor->joint)
         {
