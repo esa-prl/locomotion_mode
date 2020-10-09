@@ -8,36 +8,14 @@
 
 namespace locomotion_mode{
 
-  // TODO: Place inside Rover class
-
   class Rover
   {
   public:
     Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model);
 
-    struct Motor
-    {
-      Motor();
+    struct Motor;
 
-      std::shared_ptr<urdf::Joint> joint;
-      std::shared_ptr<urdf::Link> link;
-      urdf::Pose global_pose;
-
-      sensor_msgs::msg::JointState joint_state;
-    };
-
-    struct Leg
-    {
-      Leg();
-      // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
-      std::string name;
-
-      std::shared_ptr<Motor> driving_motor;
-      std::shared_ptr<Motor> steering_motor;
-      std::shared_ptr<Motor> deployment_motor;
-      std::vector<std::shared_ptr<Motor>> motors;
-
-    };
+    struct Leg;
 
     // Legs
     std::vector<std::shared_ptr<Leg>> legs_;
@@ -65,6 +43,28 @@ namespace locomotion_mode{
 
     urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
 
+
+  };
+
+  struct Rover::Motor {
+    Motor();
+
+    std::shared_ptr<urdf::Joint> joint;
+    std::shared_ptr<urdf::Link> link;
+    urdf::Pose global_pose;
+
+    sensor_msgs::msg::JointState joint_state;
+  };
+
+  struct Rover::Leg {
+    Leg();
+    // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
+    std::string name;
+
+    std::shared_ptr<Motor> driving_motor;
+    std::shared_ptr<Motor> steering_motor;
+    std::shared_ptr<Motor> deployment_motor;
+    std::vector<std::shared_ptr<Motor>> motors;
 
   };
 

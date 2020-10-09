@@ -17,7 +17,12 @@ KNOWN BUGS
 ----------
 * Enable pose transition does not work at the first mode activation
 
-0.0.1 (unreleased)
+0.0.2 - (unreleased)
+------------------
+* Move parsing of URDF into rover class
+* Namespaced all files w/ locomotion_mode
+
+0.0.1 - 2020-07-27
 ------------------
 * fixed name of file
 * added generic poses that can be used in transitions or otherwise.
