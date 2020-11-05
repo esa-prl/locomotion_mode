@@ -4,11 +4,13 @@ Changelog for package locomotion_mode
 
 TODO
 ----
-* Create template function for a frequency based execution.
-* Switch to Abstract Model so people don't need to use URDF specific calls incase we want to later switch to the SDF model
-* go through TODO's in code
-* robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
+* Move includes to cpp
+* Add wheel diameter computation to rover class
+* Remove urdf calls from simple_rover_locomotion and stop_mode
 * Move robot poses to different class or function
+* robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
+* go through TODO's in code
+* Create template function for a frequency based execution.
 
 NICE TO HAVE
 ------------

@@ -170,7 +170,6 @@ void LocomotionMode::load_params()
 
 }
 
-
 // Load Robot Model (URDF or XACRO)
 void LocomotionMode::load_robot_model()
 {
