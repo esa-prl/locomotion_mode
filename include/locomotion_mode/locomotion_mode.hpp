@@ -24,9 +24,6 @@ namespace locomotion_mode {
   public:
     LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
 
-    // TODO: Inside this namespace?
-    // TODO: What should be pointers, what not?
-
   protected:
     // Node name which should be set by derived class.
     std::string node_name_;

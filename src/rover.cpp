@@ -61,14 +61,33 @@ Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) {
   }
 }
 
-Rover::Leg::Leg():
-  driving_motor(std::make_shared<Motor>()),
-  steering_motor(std::make_shared<Motor>()),
-  deployment_motor(std::make_shared<Motor>())
+Rover::Leg::Leg()
+: driving_motor(std::make_shared<Motor>()),
+steering_motor(std::make_shared<Motor>()),
+deployment_motor(std::make_shared<Motor>())
 {
   motors.push_back(driving_motor);
   motors.push_back(steering_motor);
   motors.push_back(deployment_motor);
+}
+
+Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
+                std::shared_ptr<Motor> str_motor,
+                std::shared_ptr<Motor> dep_motor)
+: driving_motor(drv_motor),
+steering_motor(str_motor),
+deployment_motor(dep_motor)
+{
+  // Populate motors vector
+  motors.push_back(driving_motor);
+  motors.push_back(steering_motor);
+  motors.push_back(deployment_motor);
+
+  compute_wheel_diameter();
+
+  // Find name for leg by keeping the last two digits of the joint name.
+  name = driving_motor->joint->name;
+  name.erase(name.begin(), name.end() - 2);
 }
 
 bool Rover::parse_model() {
@@ -88,12 +107,6 @@ bool Rover::parse_model() {
 
     // Look for Driving link and create leg of locomotion model
     if (link->name.find(driving_name_) != std::string::npos) {    
-      // std::shared_ptr<Motor> steering_motor(new Motor(link));
-      // std::shared_ptr<Motor> driving_motor(new Motor(link));
-      // std::shared_ptr<Motor> deployment_motor(new Motor(link));
-
-      // auto leg = std::make_shared<Leg>()
-
       auto leg = std::make_shared<Leg>(std::make_shared<Rover::Motor>(link),
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, steering_name_)),
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, deployment_name_)));
@@ -183,25 +196,6 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
 
   return new_child;
 }
-
-Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
-                std::shared_ptr<Motor> str_motor,
-                std::shared_ptr<Motor> dep_motor)
-  : driving_motor(drv_motor),
-  steering_motor(str_motor),
-  deployment_motor(dep_motor)
-  {
-    // Populate motors vector
-    motors.push_back(driving_motor);
-    motors.push_back(steering_motor);
-    motors.push_back(deployment_motor);
-
-    compute_wheel_diameter();
-
-    // Find name for leg by keeping the last two digits of the joint name.
-    name = driving_motor->joint->name;
-    name.erase(name.begin(), name.end() - 2);
-  }
 
 bool Rover::Leg::compute_wheel_diameter(){
 
