@@ -24,7 +24,7 @@ namespace locomotion_mode{
 
   private:
 
-    // Raw URDF Model
+    // URDF Model
     std::shared_ptr<urdf::Model> model_;
 
     std::vector<std::shared_ptr<urdf::Joint>> joints_;
@@ -34,7 +34,7 @@ namespace locomotion_mode{
     std::string steering_name_;
     std::string deployment_name_;
 
-    bool init_motor(std::shared_ptr<Motor> & motor, std::shared_ptr<urdf::Link> link);
+    std::shared_ptr<Rover::Motor> init_motor(std::shared_ptr<urdf::Link> link);
 
     // Find first joint in leg, which name contains the specified name
     std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> & start_link, std::string search_name);
@@ -60,6 +60,10 @@ namespace locomotion_mode{
 
   struct Rover::Leg {
     Leg();
+    Leg(std::shared_ptr<Motor> drv_motor,
+        std::shared_ptr<Motor> str_motor,
+        std::shared_ptr<Motor> dep_motor);
+
     // Leg name should be [LF (LeftFront), RM (RightMiddle), RR (RearRight), etc.)]
     std::string name;
 

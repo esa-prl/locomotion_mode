@@ -48,7 +48,6 @@ Rover::Leg::Leg():
   motors.push_back(deployment_motor);
 }
 
-
 bool Rover::parse_model() {
 
   model_->getLinks(links_);
@@ -65,48 +64,12 @@ bool Rover::parse_model() {
     }
 
     // Look for Driving link and create leg of locomotion model
-    if (link->name.find(driving_name_) != std::string::npos) {
-
-      auto leg = std::make_shared<Leg>();
-      
-
-      if (!init_motor(leg->driving_motor, link))
-      {
-        RCLCPP_WARN(
-          rclcpp::get_logger("rover_parser"), "Persumed driving joint of leg [%s] is of type [%u].",
-          leg->driving_motor->joint->name.c_str(), leg->driving_motor->joint->type);
-      }
-
-      leg->compute_wheel_diameter();
-
-      // Find name for leg by keeping the last two digits of the joint name.
-      std::string leg_name = leg->driving_motor->joint->name;
-      leg_name.erase(leg_name.begin(), leg_name.end() - 2);
-      leg->name = leg_name;
-
-      RCLCPP_DEBUG(rclcpp::get_logger("rover_parser"), "LEG_NAME: [%s]", leg->name.c_str());
+    if (link->name.find(driving_name_) != std::string::npos) {      
+      auto leg = std::make_shared<Leg>(init_motor(link),
+                                       init_motor(get_link_in_leg(link, steering_name_)),
+                                       init_motor(get_link_in_leg(link, deployment_name_)));
 
       legs_.push_back(leg);
-    }
-  }
-
-  // Loop through all legs, find steering and deployment joints. Then save them into the leg.
-  for (auto leg : legs_) {
-
-    if (!init_motor(leg->steering_motor,
-                   get_link_in_leg(leg->driving_motor->link, steering_name_)))
-    {
-      RCLCPP_INFO(
-        rclcpp::get_logger("rover_parser"), "Leg [%s] is not steerable.",
-        leg->name.c_str());
-    }
-
-    if (!init_motor(leg->deployment_motor,
-                   get_link_in_leg(leg->driving_motor->link, deployment_name_)))
-    {
-      RCLCPP_INFO(
-        rclcpp::get_logger("rover_parser"), "Leg [%s] is not deployable.",
-        leg->name.c_str());
     }
   }
 
@@ -114,11 +77,10 @@ bool Rover::parse_model() {
 }
 
 // Define Link, joint and global position of a locomotion_mode motor.
-bool Rover::init_motor(
-  std::shared_ptr<Motor> & motor,
+std::shared_ptr<Rover::Motor> Rover::init_motor(
   std::shared_ptr<urdf::Link> link)
 {
-
+  std::shared_ptr<Rover::Motor> motor = std::make_shared<Rover::Motor>();
 
   // It can only be a motor if it is a revolute, continuous or prismatic joint
   if (link->parent_joint->type == urdf::Joint::REVOLUTE ||
@@ -128,16 +90,15 @@ bool Rover::init_motor(
     motor->link = link;
     motor->joint = link->parent_joint;
     motor->global_pose = get_parent_joint_position(link);
-
-    return true;
   }
-  else
-  {
-    RCLCPP_DEBUG(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
-    return false;
+  else {
+    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
   }
+  
+  return motor;
 
 }
+
 
 // Find a link in the parents of the provided link which.
 // The link is found if the search_name is in the link_name. They don't have to match fully.
@@ -217,6 +178,25 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
 
   return new_child;
 }
+
+Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
+                std::shared_ptr<Motor> str_motor,
+                std::shared_ptr<Motor> dep_motor)
+  : driving_motor(drv_motor),
+  steering_motor(str_motor),
+  deployment_motor(dep_motor)
+  {
+    // Populate motors vector
+    motors.push_back(driving_motor);
+    motors.push_back(steering_motor);
+    motors.push_back(deployment_motor);
+
+    compute_wheel_diameter();
+
+    // Find name for leg by keeping the last two digits of the joint name.
+    name = driving_motor->joint->name;
+    name.erase(name.begin(), name.end() - 2);
+  }
 
 bool Rover::Leg::compute_wheel_diameter(){
 
