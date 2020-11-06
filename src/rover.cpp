@@ -36,6 +36,29 @@ Rover::Motor::Motor()
   joint_state.position.resize(1);
   joint_state.velocity.resize(1);
   joint_state.effort.resize(1);
+  
+}
+
+Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) {
+
+  // Init joint states
+  joint_state.name.resize(1);
+  joint_state.position.resize(1);
+  joint_state.velocity.resize(1);
+  joint_state.effort.resize(1);
+
+  // Init motor
+  if (init_link->parent_joint->type == urdf::Joint::REVOLUTE ||
+      init_link->parent_joint->type == urdf::Joint::CONTINUOUS ||
+      init_link->parent_joint->type == urdf::Joint::PRISMATIC)
+  {
+    link = init_link;
+    joint = link->parent_joint;
+    global_pose = Rover::get_parent_joint_position(link);
+  }
+  else {
+    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
+  }
 }
 
 Rover::Leg::Leg():
@@ -64,10 +87,16 @@ bool Rover::parse_model() {
     }
 
     // Look for Driving link and create leg of locomotion model
-    if (link->name.find(driving_name_) != std::string::npos) {      
-      auto leg = std::make_shared<Leg>(init_motor(link),
-                                       init_motor(get_link_in_leg(link, steering_name_)),
-                                       init_motor(get_link_in_leg(link, deployment_name_)));
+    if (link->name.find(driving_name_) != std::string::npos) {    
+      // std::shared_ptr<Motor> steering_motor(new Motor(link));
+      // std::shared_ptr<Motor> driving_motor(new Motor(link));
+      // std::shared_ptr<Motor> deployment_motor(new Motor(link));
+
+      // auto leg = std::make_shared<Leg>()
+
+      auto leg = std::make_shared<Leg>(std::make_shared<Rover::Motor>(link),
+                                       std::make_shared<Rover::Motor>(get_link_in_leg(link, steering_name_)),
+                                       std::make_shared<Rover::Motor>(get_link_in_leg(link, deployment_name_)));
 
       legs_.push_back(leg);
     }
@@ -76,34 +105,10 @@ bool Rover::parse_model() {
   return true;
 }
 
-// Define Link, joint and global position of a locomotion_mode motor.
-std::shared_ptr<Rover::Motor> Rover::init_motor(
-  std::shared_ptr<urdf::Link> link)
-{
-  std::shared_ptr<Rover::Motor> motor = std::make_shared<Rover::Motor>();
-
-  // It can only be a motor if it is a revolute, continuous or prismatic joint
-  if (link->parent_joint->type == urdf::Joint::REVOLUTE ||
-      link->parent_joint->type == urdf::Joint::CONTINUOUS ||
-      link->parent_joint->type == urdf::Joint::PRISMATIC)
-  {
-    motor->link = link;
-    motor->joint = link->parent_joint;
-    motor->global_pose = get_parent_joint_position(link);
-  }
-  else {
-    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
-  }
-  
-  return motor;
-
-}
-
-
 // Find a link in the parents of the provided link which.
 // The link is found if the search_name is in the link_name. They don't have to match fully.
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
-  std::shared_ptr<urdf::Link> & start_link, std::string search_name)
+  const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
 {
 
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);

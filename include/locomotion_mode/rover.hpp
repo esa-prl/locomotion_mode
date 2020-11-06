@@ -22,6 +22,12 @@ namespace locomotion_mode{
     
     bool parse_model();
 
+    // Derive Position of Joint in static configuration
+    static urdf::Pose get_parent_joint_position(const std::shared_ptr<urdf::Link> & link);
+
+    // Trasposes position of child pose into the coordinate frame of the parent pose.
+    static urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
+
   private:
 
     // URDF Model
@@ -34,22 +40,13 @@ namespace locomotion_mode{
     std::string steering_name_;
     std::string deployment_name_;
 
-    std::shared_ptr<Rover::Motor> init_motor(std::shared_ptr<urdf::Link> link);
-
     // Find first joint in leg, which name contains the specified name
-    std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> & start_link, std::string search_name);
-
-    // Derive Position of Joint in static configuration
-    urdf::Pose get_parent_joint_position(const std::shared_ptr<urdf::Link> & link);
-
-    // Trasposes position of child pose into the coordinate frame of the parent pose.
-    urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
-
-
+    std::shared_ptr<urdf::Link> get_link_in_leg(const std::shared_ptr<urdf::Link> & start_link, std::string search_name);
   };
 
   struct Rover::Motor {
     Motor();
+    Motor(std::shared_ptr<urdf::Link> init_link);
 
     std::shared_ptr<urdf::Joint> joint;
     std::shared_ptr<urdf::Link> link;
