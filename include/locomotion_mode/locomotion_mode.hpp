@@ -1,19 +1,13 @@
 #ifndef LOCOMOTION_MODE_H
 #define LOCOMOTION_MODE_H
 
-#include "rclcpp/rclcpp.hpp"
-#include <urdf/model.h>
-
 #include <chrono>
-#include <memory>
-#include <regex>
-
 #include <string.h>
 
+#include "rclcpp/rclcpp.hpp"
 #include "rover.hpp"
 
 #include <geometry_msgs/msg/twist.hpp>
-#include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
@@ -68,8 +62,6 @@ namespace locomotion_mode {
     // Model
     std::shared_ptr<Rover> rover_;
 
-    std::shared_ptr<urdf::Model> model_;
-
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
     // Velocities Callback
@@ -78,7 +70,7 @@ namespace locomotion_mode {
     // Load parameters
     void load_params();
 
-    // Load robot model (urdf)
+    // Create rover model from urdf path
     void load_robot_model();
 
     // Initialize Messages
@@ -130,9 +122,6 @@ namespace locomotion_mode {
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
-
-    // Parameters
-    // string mode_name_;
 
   };
 

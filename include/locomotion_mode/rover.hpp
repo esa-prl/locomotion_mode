@@ -11,7 +11,7 @@ namespace locomotion_mode{
   class Rover
   {
   public:
-    Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model);
+    Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::string model_path);
 
     struct Motor;
 

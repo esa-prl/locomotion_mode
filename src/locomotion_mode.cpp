@@ -1,5 +1,8 @@
 #include "locomotion_mode/locomotion_mode.hpp"
 
+#include <regex>
+
+
 using namespace locomotion_mode;
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
@@ -12,7 +15,6 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   parameters_client_(std::make_shared<rclcpp::SyncParametersClient>(this)),
   enable_pose_(std::make_shared<RobotPose>()),
   disable_pose_(std::make_shared<RobotPose>()),
-  model_(new urdf::Model()),
   // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"), steering_name_("STR"), deployment_name_("DEP")
@@ -174,16 +176,7 @@ void LocomotionMode::load_params()
 void LocomotionMode::load_robot_model()
 {
 
-  if (!model_->initFile(model_path_)) {
-    RCLCPP_ERROR(
-      this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.",
-      model_path_.c_str());
-  }
-  else {
-    RCLCPP_INFO(this->get_logger(), "URDF file loaded successfully.");
-  }
-
-  rover_.reset(new Rover(driving_name_, steering_name_, deployment_name_, model_));
+  rover_.reset(new Rover(driving_name_, steering_name_, deployment_name_, model_path_));
   
   rover_->parse_model();
 }

@@ -3,7 +3,9 @@
 
 using namespace locomotion_mode;
 
-Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::shared_ptr<urdf::Model> model) {
+Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::string model_path)
+: model_(new urdf::Model())
+{
 
   if (driving_name.empty() || steering_name.empty() || deployment_name.empty()) {
     RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Identification strings is/are empty.");
@@ -15,7 +17,17 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   steering_name_ = steering_name;
   deployment_name_ = deployment_name;
 
-  model_ = model;
+  // Load Model from path
+  if (!model_->initFile(model_path)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("rover_parser"),
+        "URDF file [%s] not found. Make sure the path is specified in the launch file.",
+        model_path.c_str());
+  }
+  else {
+    RCLCPP_INFO(rclcpp::get_logger("rover_parser"),
+      "URDF file loaded successfully.");
+  }
 }
 
 Rover::Motor::Motor()
