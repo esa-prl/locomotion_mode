@@ -4,7 +4,6 @@ Changelog for package locomotion_mode
 
 TODO
 ----
-* Move includes to cpp
 * Add wheel diameter computation to rover class
 * Remove urdf calls from simple_rover_locomotion and stop_mode
 * Move robot poses to different class or function

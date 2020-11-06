@@ -77,6 +77,8 @@ bool Rover::parse_model() {
           leg->driving_motor->joint->name.c_str(), leg->driving_motor->joint->type);
       }
 
+      leg->compute_wheel_diameter();
+
       // Find name for leg by keeping the last two digits of the joint name.
       std::string leg_name = leg->driving_motor->joint->name;
       leg_name.erase(leg_name.begin(), leg_name.end() - 2);
@@ -158,7 +160,7 @@ std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
 }
 
 // Derive Position of Joint in static configuration
-urdf::Pose Rover::get_parent_joint_position(std::shared_ptr<urdf::Link> & link)
+urdf::Pose Rover::get_parent_joint_position(const std::shared_ptr<urdf::Link> & link)
 {
   // TODO: Potentially pass by value instaed of shared_ptr so we don't have to copy it.
   // Copy link so we don't overwrite the original one
@@ -214,4 +216,24 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
   // TODO Transform orientation
 
   return new_child;
+}
+
+bool Rover::Leg::compute_wheel_diameter(){
+
+  if (this->driving_motor->link->collision->geometry->type == urdf::Geometry::CYLINDER) {
+    std::shared_ptr<urdf::Cylinder> cyl = std::static_pointer_cast<urdf::Cylinder>(
+      this->driving_motor->link->collision->geometry);
+    wheel_diameter = 2 * cyl->radius;
+
+    return true;
+  }
+  else {
+    wheel_diameter = 0.1;
+    RCLCPP_WARN(
+      rclcpp::get_logger("rover_parser"),
+      "Wheel Link: %s collision geometry should be a cylinder! Wheel radius set to hardcoded value of %f [m]", this->driving_motor->link->name,
+      wheel_diameter);
+
+    return false;
+  }
 }

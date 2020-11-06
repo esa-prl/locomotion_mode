@@ -40,7 +40,7 @@ namespace locomotion_mode{
     std::shared_ptr<urdf::Link> get_link_in_leg(std::shared_ptr<urdf::Link> & start_link, std::string search_name);
 
     // Derive Position of Joint in static configuration
-    urdf::Pose get_parent_joint_position(std::shared_ptr<urdf::Link> & link);
+    urdf::Pose get_parent_joint_position(const std::shared_ptr<urdf::Link> & link);
 
     // Trasposes position of child pose into the coordinate frame of the parent pose.
     urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
@@ -67,7 +67,10 @@ namespace locomotion_mode{
     std::shared_ptr<Motor> steering_motor;
     std::shared_ptr<Motor> deployment_motor;
     std::vector<std::shared_ptr<Motor>> motors;
+    double wheel_diameter;
 
+    
+    bool compute_wheel_diameter();
   };
 
 }
