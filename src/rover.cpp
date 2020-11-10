@@ -78,18 +78,12 @@ deployment_motor(dep_motor)
 
 bool Rover::parse_model() {
 
-  model_->getLinks(links_);
+  std::vector<std::shared_ptr<urdf::Link>> links;
+
+  model_->getLinks(links);
 
   // Loop through all links
-  for (std::shared_ptr<urdf::Link> link : links_) {
-    // Get Joints
-    if (link->child_joints.size() != 0) {
-
-      for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
-        joints_.push_back(child_joint);
-        // RCLCPP_INFO(rclcpp::get_logger("rover_parser"), "\t %s", child_joint->name.c_str());
-      }
-    }
+  for (std::shared_ptr<urdf::Link> link : links) {
 
     // Look for Driving link and create leg of locomotion model
     if (link->name.find(driving_name_) != std::string::npos) {    
@@ -109,19 +103,18 @@ bool Rover::parse_model() {
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
 {
-
   std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
 
   while (tmp_link->parent_joint) {
     // If the search_name is found within the link name the search is aborted and said link is returned
     // TODO: Insert regex here
     if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
-      break;
+      return tmp_link;
     }
     tmp_link = tmp_link->getParent();
   }
 
-  return tmp_link;
+  return std::make_shared<urdf::Link>();
 }
 
 // Derive Position of Joint in static configuration
