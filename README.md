@@ -72,7 +72,8 @@ This node should never be started without being inherited by a derived class.
 
 * **`/joint_states`** ([sensor_msgs/JointState])
 
-	Desired linear and angular velocity of rover.
+	Measured joint positions and velocities of rover.
+
 
 #### Published Topics
 * **`/joint_cmds`** ([rover_msgs/JointCommandArray])
