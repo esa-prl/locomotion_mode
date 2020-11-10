@@ -36,7 +36,8 @@ velocity(0),
 effort(0)
 {}
 
-Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link)
+Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) :
+current_state(std::make_shared<State>())
 {
   // Init motor
   if (init_link->parent_joint->type == urdf::Joint::REVOLUTE ||
