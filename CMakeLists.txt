@@ -35,17 +35,12 @@ set(dependencies
   "rover_msgs")
 
 # add library
-# add_library(${PROJECT_NAME} STATIC src/locomotion_mode.cpp)
 file(GLOB MY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 add_library(${PROJECT_NAME} STATIC ${MY_SOURCES})
 
-
 # specify include paths and dependencies
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
-target_include_directories(${PROJECT_NAME}
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
+target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 
@@ -61,7 +56,6 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
 )
 
 ament_export_libraries(${PROJECT_NAME})
