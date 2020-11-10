@@ -30,23 +30,8 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   }
 }
 
-Rover::Motor::Motor()
+Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link)
 {
-  joint_state.name.resize(1);
-  joint_state.position.resize(1);
-  joint_state.velocity.resize(1);
-  joint_state.effort.resize(1);
-  
-}
-
-Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) {
-
-  // Init joint states
-  joint_state.name.resize(1);
-  joint_state.position.resize(1);
-  joint_state.velocity.resize(1);
-  joint_state.effort.resize(1);
-
   // Init motor
   if (init_link->parent_joint->type == urdf::Joint::REVOLUTE ||
       init_link->parent_joint->type == urdf::Joint::CONTINUOUS ||

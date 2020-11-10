@@ -341,20 +341,24 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
           if (motor->joint->name.compare(msg->name[i].c_str()) == 0) {
             RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
 
-            motor->joint_state.header = msg->header;
-            if (!msg->position.empty()) {motor->joint_state.position[0] = msg->position[i];} else {
+            if (!msg->position.empty()) {
+              motor->current_state->position = msg->position[i];}
+            else {
               RCLCPP_WARN(
                 this->get_logger(), "Received no Position for Motor %s",
                 msg->name[i].c_str());
             }
 
-            if (!msg->velocity.empty()) {motor->joint_state.velocity[0] = msg->velocity[i];} else {
+            if (!msg->velocity.empty()) {
+              motor->current_state->velocity = msg->velocity[i];}
+            else {
               RCLCPP_WARN(
                 this->get_logger(), "Received no Veloctiy for Motor %s",
                 msg->name[i].c_str());
             }
 
-            if (!msg->effort.empty()) {motor->joint_state.effort[0] = msg->effort[i];}
+            if (!msg->effort.empty()) {
+              motor->current_state->effort = msg->effort[i];}
             // else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
           }
         }

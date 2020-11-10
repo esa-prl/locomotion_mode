@@ -1,10 +1,7 @@
 #ifndef ROVER_H
 #define ROVER_H
 
-#include <sensor_msgs/msg/joint_state.hpp>
-
 #include <urdf/model.h>
-
 
 namespace locomotion_mode{
 
@@ -29,7 +26,6 @@ namespace locomotion_mode{
     static urdf::Pose transpose_pose(urdf::Pose parent, urdf::Pose child);
 
   private:
-
     // URDF Model
     std::shared_ptr<urdf::Model> model_;
 
@@ -45,14 +41,23 @@ namespace locomotion_mode{
   };
 
   struct Rover::Motor {
-    Motor();
+    Motor() {};
     Motor(std::shared_ptr<urdf::Link> init_link);
 
     std::shared_ptr<urdf::Joint> joint;
     std::shared_ptr<urdf::Link> link;
     urdf::Pose global_pose;
 
-    sensor_msgs::msg::JointState joint_state;
+    struct State;
+
+    std::shared_ptr<State> current_state;
+
+  };
+
+  struct Rover::Motor::State {
+    double position;
+    double velocity;
+    double effort;
   };
 
   struct Rover::Leg {

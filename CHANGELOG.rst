@@ -11,6 +11,7 @@ TODO
 * Generalize Leg name determination
 * Use regex to determine joint type
 * Create template function for a frequency based execution.
+* Use Map for motors instead of individual objects and a vector
 
 NICE TO HAVE
 ------------
