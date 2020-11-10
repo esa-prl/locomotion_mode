@@ -205,9 +205,8 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
     return true;
   }
   else {
+    rover_msgs::msg::JointCommand joint_command_msg;
     rover_msgs::msg::JointCommandArray joint_command_array_msg;
-    rover_msgs::msg::JointCommand steering_msg;
-    rover_msgs::msg::JointCommand deployment_msg;
 
     // Loops through legs
     for (auto leg : rover_->legs_) {
@@ -220,11 +219,11 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
           str_mapping_.begin(),
           std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
 
-        steering_msg.name = leg->steering_motor->joint->name;
-        steering_msg.mode = ("POSITION");
-        steering_msg.value = poses_[pose_name]->str_positions[index];
+        joint_command_msg.name = leg->steering_motor->joint->name;
+        joint_command_msg.mode = ("POSITION");
+        joint_command_msg.value = poses_[pose_name]->str_positions[index];
 
-        joint_command_array_msg.joint_command_array.push_back(steering_msg);
+        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
 
       }
       // Checks if leg is deployable
@@ -235,10 +234,10 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
           dep_mapping_.begin(),
           std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
 
-        deployment_msg.name = leg->deployment_motor->joint->name;
-        deployment_msg.mode = ("POSITION");
-        deployment_msg.value = poses_[pose_name]->dep_positions[index];
-        joint_command_array_msg.joint_command_array.push_back(deployment_msg);
+        joint_command_msg.name = leg->deployment_motor->joint->name;
+        joint_command_msg.mode = ("POSITION");
+        joint_command_msg.value = poses_[pose_name]->dep_positions[index];
+        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
       }
 
     }
