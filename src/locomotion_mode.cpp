@@ -192,10 +192,7 @@ void LocomotionMode::enable_subscribers()
 // Disable the subscribers
 void LocomotionMode::disable_subscribers()
 {
-  // rover_velocities_subscription_.reset();
-  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "rover_motion_cmd_disabled", 10,
-    std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));
+  rover_velocities_subscription_.reset();
 }
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
@@ -301,16 +298,6 @@ void LocomotionMode::disable_callback(
     RCLCPP_WARN(
       this->get_logger(), "Could not properly disable locomotion mode: %s", node_name_.c_str());
   }
-}
-
-// Dummy Callback in case someone actually sends a message to the disabled topic.
-// TODO: There must be a better way to disable a subscription rather then just changing it's topic name to a new one.
-void LocomotionMode::rover_velocities_callback_disabled(
-  __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg)
-{
-  RCLCPP_WARN(
-    this->get_logger(), "%s is disabled! Activate it before usage."
-    "Why the f*** did you even send a message to this topic?!", node_name_.c_str());
 }
 
 // Dummy Callback function in case the derived class forgets to create a custom callback function

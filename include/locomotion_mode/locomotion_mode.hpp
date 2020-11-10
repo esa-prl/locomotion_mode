@@ -110,9 +110,6 @@ namespace locomotion_mode {
     // Joint States Callback
     void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-    // Disabled Callback
-    void rover_velocities_callback_disabled(const geometry_msgs::msg::Twist::SharedPtr msg);
-
     // URDF Model
     std::string model_path_;
 
