@@ -210,7 +210,6 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
 
     // Loops through legs
     for (auto leg : rover_->legs_) {
-
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
         // Finds desired motor index (int) based on motor name.
@@ -244,7 +243,6 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
 
     joint_command_publisher_->publish(joint_command_array_msg);
     // TODO: Add wait to see if the position was actually reached.
-
     return true;
   }
 }
@@ -268,7 +266,12 @@ void LocomotionMode::enable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
-  RCLCPP_INFO(this->get_logger(), "Enabeling %s.", node_name_.c_str());
+  if (enabled_) {
+    RCLCPP_INFO(this->get_logger(), "Locomotion mode %s already enabled.", node_name_.c_str());
+    return;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Enabling locomotion mode %s.", node_name_.c_str());
   if (enable()) {
     enable_subscribers();
     response->success = true;
@@ -284,7 +287,12 @@ void LocomotionMode::disable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
-  RCLCPP_DEBUG(this->get_logger(), "Disabling %s.", node_name_.c_str());
+  if (!enabled_) {
+    RCLCPP_INFO(this->get_logger(), "Locomotion mode %s already disabled.", node_name_.c_str());
+    return;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Disabling locomotion mode %s.", node_name_.c_str());
 
   // disable the subscribers before starting the disablign proceedure, so no rover_velocity callbacks can interfere with the transition
   disable_subscribers();
@@ -302,7 +310,6 @@ void LocomotionMode::disable_callback(
 // Dummy Callback function in case the derived class forgets to create a custom callback function
 void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-  // RCLCPP_INFO(this->get_logger(), "I heard: '%s'", msg->data.c_str());
   RCLCPP_INFO(this->get_logger(), "X_linear: %f.", msg->linear.x);
   RCLCPP_INFO(this->get_logger(), "Y_linear: %f.", msg->linear.y);
   RCLCPP_INFO(this->get_logger(), "Z_linear: %f.", msg->linear.z);
