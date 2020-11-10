@@ -103,7 +103,8 @@ bool Rover::parse_model() {
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
 {
-  std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*start_link);
+  // Copy link so we don't overwrite the original one
+  std::shared_ptr<urdf::Link> tmp_link = start_link;
 
   while (tmp_link->parent_joint) {
     // If the search_name is found within the link name the search is aborted and said link is returned
@@ -120,9 +121,8 @@ std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
 // Derive Position of Joint in static configuration
 urdf::Pose Rover::get_parent_joint_position(const std::shared_ptr<urdf::Link> & link)
 {
-  // TODO: Potentially pass by value instaed of shared_ptr so we don't have to copy it.
   // Copy link so we don't overwrite the original one
-  std::shared_ptr<urdf::Link> tmp_link = std::make_shared<urdf::Link>(*link);
+  std::shared_ptr<urdf::Link> tmp_link = link;
 
   urdf::Pose child_pose;
 
