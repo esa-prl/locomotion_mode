@@ -175,7 +175,6 @@ void LocomotionMode::load_params()
 // Load Robot Model (URDF or XACRO)
 void LocomotionMode::load_robot_model()
 {
-
   rover_.reset(new Rover(driving_name_, steering_name_, deployment_name_, model_path_));
   
   rover_->parse_model();
@@ -193,6 +192,7 @@ void LocomotionMode::enable_subscribers()
 // Disable the subscribers
 void LocomotionMode::disable_subscribers()
 {
+  // rover_velocities_subscription_.reset();
   rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
     "rover_motion_cmd_disabled", 10,
     std::bind(&LocomotionMode::rover_velocities_callback_disabled, this, std::placeholders::_1));

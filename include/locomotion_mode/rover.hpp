@@ -55,6 +55,8 @@ namespace locomotion_mode{
   };
 
   struct Rover::Motor::State {
+    State();
+
     double position;
     double velocity;
     double effort;
