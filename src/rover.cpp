@@ -30,12 +30,6 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   }
 }
 
-Rover::Motor::State::State() :
-position(0),
-velocity(0),
-effort(0)
-{}
-
 Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) :
 current_state(std::make_shared<State>())
 {
