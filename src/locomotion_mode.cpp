@@ -13,8 +13,6 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   node_name_(node_name),
   enabled_(false),
   parameters_client_(std::make_shared<rclcpp::SyncParametersClient>(this)),
-  enable_pose_(std::make_shared<RobotPose>()),
-  disable_pose_(std::make_shared<RobotPose>()),
   // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"), steering_name_("STR"), deployment_name_("DEP")
@@ -247,15 +245,16 @@ bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
   }
 }
 
-// enable() and disable() are called from the enable and disable callback. They return true or false depending if the the mode was successfully dis-/enabled.
-// enable() and disable() can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
+// enabling_sequence() and disabling_sequence() are called from the enable_ and disable_callback.
+// They return true or false depending if the sequence was executed successfully.
+// Both functions can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
 // Without overwrite they execute a transition to the en-/disable_pose and return if it was successful or not.
-bool LocomotionMode::enable()
+bool LocomotionMode::enabling_sequence()
 {
   return transition_to_robot_pose(enable_pose_name_);
 }
 
-bool LocomotionMode::disable()
+bool LocomotionMode::disabling_sequence()
 {
   return transition_to_robot_pose(disable_pose_name_);
 }
@@ -272,7 +271,7 @@ void LocomotionMode::enable_callback(
   }
 
   RCLCPP_INFO(this->get_logger(), "Enabling locomotion mode %s.", node_name_.c_str());
-  if (enable()) {
+  if (enabling_sequence()) {
     enable_subscribers();
     response->success = true;
     enabled_ = true;
@@ -297,7 +296,7 @@ void LocomotionMode::disable_callback(
   // disable the subscribers before starting the disablign proceedure, so no rover_velocity callbacks can interfere with the transition
   disable_subscribers();
 
-  if (disable()) {
+  if (disabling_sequence()) {
     response->success = true;
     enabled_ = false;
   } else {
