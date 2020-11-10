@@ -1,4 +1,4 @@
-#include "locomotion_mode/stop_mode.hpp"
+#include "stop_mode.hpp"
 
 using namespace locomotion_mode;
 
