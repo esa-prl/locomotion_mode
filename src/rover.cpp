@@ -30,52 +30,6 @@ Rover::Rover(std::string driving_name, std::string steering_name, std::string de
   }
 }
 
-Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) :
-current_state(std::make_shared<State>())
-{
-  // Init motor
-  if (init_link->parent_joint->type == urdf::Joint::REVOLUTE ||
-      init_link->parent_joint->type == urdf::Joint::CONTINUOUS ||
-      init_link->parent_joint->type == urdf::Joint::PRISMATIC)
-  {
-    link = init_link;
-    joint = link->parent_joint;
-    global_pose = Rover::get_parent_joint_position(link);
-  }
-  else {
-    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
-  }
-}
-
-Rover::Leg::Leg()
-: driving_motor(std::make_shared<Motor>()),
-steering_motor(std::make_shared<Motor>()),
-deployment_motor(std::make_shared<Motor>())
-{
-  motors.push_back(driving_motor);
-  motors.push_back(steering_motor);
-  motors.push_back(deployment_motor);
-}
-
-Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
-                std::shared_ptr<Motor> str_motor,
-                std::shared_ptr<Motor> dep_motor)
-: driving_motor(drv_motor),
-steering_motor(str_motor),
-deployment_motor(dep_motor)
-{
-  // Populate motors vector
-  motors.push_back(driving_motor);
-  motors.push_back(steering_motor);
-  motors.push_back(deployment_motor);
-
-  compute_wheel_diameter();
-
-  // Find name for leg by keeping the last two digits of the joint name.
-  name = driving_motor->joint->name;
-  name.erase(name.begin(), name.end() - 2);
-}
-
 bool Rover::parse_model() {
 
   std::vector<std::shared_ptr<urdf::Link>> links;
@@ -96,26 +50,6 @@ bool Rover::parse_model() {
   }
 
   return true;
-}
-
-// Find a link in the parents of the provided link which.
-// The link is found if the search_name is in the link_name. They don't have to match fully.
-std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
-  const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
-{
-  // Copy link so we don't overwrite the original one
-  std::shared_ptr<urdf::Link> tmp_link = start_link;
-
-  while (tmp_link->parent_joint) {
-    // If the search_name is found within the link name the search is aborted and said link is returned
-    // TODO: Insert regex here
-    if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
-      return tmp_link;
-    }
-    tmp_link = tmp_link->getParent();
-  }
-
-  return std::make_shared<urdf::Link>();
 }
 
 // Derive Position of Joint in static configuration
@@ -174,6 +108,72 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
   // TODO Transform orientation
 
   return new_child;
+}
+
+// Find a link in the parents of the provided link which.
+// The link is found if the search_name is in the link_name. They don't have to match fully.
+std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
+  const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
+{
+  // Copy link so we don't overwrite the original one
+  std::shared_ptr<urdf::Link> tmp_link = start_link;
+
+  while (tmp_link->parent_joint) {
+    // If the search_name is found within the link name the search is aborted and said link is returned
+    // TODO: Insert regex here
+    if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
+      return tmp_link;
+    }
+    tmp_link = tmp_link->getParent();
+  }
+
+  return std::make_shared<urdf::Link>();
+}
+
+Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) :
+current_state(std::make_shared<State>())
+{
+  // Init motor
+  if (init_link->parent_joint->type == urdf::Joint::REVOLUTE ||
+      init_link->parent_joint->type == urdf::Joint::CONTINUOUS ||
+      init_link->parent_joint->type == urdf::Joint::PRISMATIC)
+  {
+    link = init_link;
+    joint = link->parent_joint;
+    global_pose = Rover::get_parent_joint_position(link);
+  }
+  else {
+    RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
+  }
+}
+
+Rover::Leg::Leg()
+: driving_motor(std::make_shared<Motor>()),
+steering_motor(std::make_shared<Motor>()),
+deployment_motor(std::make_shared<Motor>())
+{
+  motors.push_back(driving_motor);
+  motors.push_back(steering_motor);
+  motors.push_back(deployment_motor);
+}
+
+Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
+                std::shared_ptr<Motor> str_motor,
+                std::shared_ptr<Motor> dep_motor)
+: driving_motor(drv_motor),
+steering_motor(str_motor),
+deployment_motor(dep_motor)
+{
+  // Populate motors vector
+  motors.push_back(driving_motor);
+  motors.push_back(steering_motor);
+  motors.push_back(deployment_motor);
+
+  compute_wheel_diameter();
+
+  // Find name for leg by keeping the last two digits of the joint name.
+  name = driving_motor->joint->name;
+  name.erase(name.begin(), name.end() - 2);
 }
 
 bool Rover::Leg::compute_wheel_diameter(){

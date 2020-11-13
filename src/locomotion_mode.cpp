@@ -48,6 +48,85 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_nam
   RCLCPP_INFO(this->get_logger(), "%s STARTED.", node_name.c_str());
 }
 
+// Dummy Callback function in case the derived class forgets to create a custom callback function
+void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  RCLCPP_INFO(this->get_logger(), "X_linear: %f.", msg->linear.x);
+  RCLCPP_INFO(this->get_logger(), "Y_linear: %f.", msg->linear.y);
+  RCLCPP_INFO(this->get_logger(), "Z_linear: %f.", msg->linear.z);
+  RCLCPP_INFO(this->get_logger(), "X_angular: %f.", msg->angular.x);
+  RCLCPP_INFO(this->get_logger(), "Y_angular: %f.", msg->angular.y);
+
+  RCLCPP_WARN(this->get_logger(), "Rover Velocities Callback was not overridden!");
+}
+
+
+// Blocking function that returns true once a transition to a desired pose was achieved.
+bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
+{
+  RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
+  // Checks if pose_name is NONE and returns.
+  if (!pose_name.compare("NONE"))
+  {
+    return true;
+  }
+  else {
+    rover_msgs::msg::JointCommand joint_command_msg;
+    rover_msgs::msg::JointCommandArray joint_command_array_msg;
+
+    // Loops through legs
+    for (auto leg : rover_->legs_) {
+      // Checks if leg is steerable
+      if (leg->steering_motor->joint) {
+        // Finds desired motor index (int) based on motor name.
+        int index =
+          std::distance(
+          str_mapping_.begin(),
+          std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
+
+        joint_command_msg.name = leg->steering_motor->joint->name;
+        joint_command_msg.mode = ("POSITION");
+        joint_command_msg.value = poses_[pose_name]->str_positions[index];
+
+        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
+
+      }
+      // Checks if leg is deployable
+      if (leg->deployment_motor->joint) {
+        // Finds desired motor index (int) based on motor name.
+        int index =
+          std::distance(
+          dep_mapping_.begin(),
+          std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
+
+        joint_command_msg.name = leg->deployment_motor->joint->name;
+        joint_command_msg.mode = ("POSITION");
+        joint_command_msg.value = poses_[pose_name]->dep_positions[index];
+        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
+      }
+
+    }
+
+    joint_command_publisher_->publish(joint_command_array_msg);
+    // TODO: Add wait to see if the position was actually reached.
+    return true;
+  }
+}
+
+// enabling_sequence() and disabling_sequence() are called from the enable_ and disable_callback.
+// They return true or false depending if the sequence was executed successfully.
+// Both functions can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
+// Without overwrite they execute a transition to the en-/disable_pose and return if it was successful or not.
+bool LocomotionMode::enabling_sequence()
+{
+  return transition_to_robot_pose(enable_pose_name_);
+}
+
+bool LocomotionMode::disabling_sequence()
+{
+  return transition_to_robot_pose(disable_pose_name_);
+}
+
 // Load Parameters
 void LocomotionMode::load_params()
 {
@@ -178,88 +257,6 @@ void LocomotionMode::load_robot_model()
   rover_->parse_model();
 }
 
-// Function to be called from the derived class while it is being initialized.
-// Creates a subscriber using the (now by derived class overwritten) callback function
-void LocomotionMode::enable_subscribers()
-{
-  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "rover_motion_cmd", 10,
-    std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
-}
-
-// Disable the subscribers
-void LocomotionMode::disable_subscribers()
-{
-  rover_velocities_subscription_.reset();
-}
-
-// Blocking function that returns true once a transition to a desired pose was achieved.
-bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
-{
-  RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
-  // Checks if pose_name is NONE and returns.
-  if (!pose_name.compare("NONE"))
-  {
-    return true;
-  }
-  else {
-    rover_msgs::msg::JointCommand joint_command_msg;
-    rover_msgs::msg::JointCommandArray joint_command_array_msg;
-
-    // Loops through legs
-    for (auto leg : rover_->legs_) {
-      // Checks if leg is steerable
-      if (leg->steering_motor->joint) {
-        // Finds desired motor index (int) based on motor name.
-        int index =
-          std::distance(
-          str_mapping_.begin(),
-          std::find(str_mapping_.begin(), str_mapping_.end(), leg->name));
-
-        joint_command_msg.name = leg->steering_motor->joint->name;
-        joint_command_msg.mode = ("POSITION");
-        joint_command_msg.value = poses_[pose_name]->str_positions[index];
-
-        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
-
-      }
-      // Checks if leg is deployable
-      if (leg->deployment_motor->joint) {
-        // Finds desired motor index (int) based on motor name.
-        int index =
-          std::distance(
-          dep_mapping_.begin(),
-          std::find(dep_mapping_.begin(), dep_mapping_.end(), leg->name));
-
-        joint_command_msg.name = leg->deployment_motor->joint->name;
-        joint_command_msg.mode = ("POSITION");
-        joint_command_msg.value = poses_[pose_name]->dep_positions[index];
-        joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
-      }
-
-    }
-
-    joint_command_publisher_->publish(joint_command_array_msg);
-    // TODO: Add wait to see if the position was actually reached.
-    return true;
-  }
-}
-
-// enabling_sequence() and disabling_sequence() are called from the enable_ and disable_callback.
-// They return true or false depending if the sequence was executed successfully.
-// Both functions can be overwritten by the derived class to add aditional functionality on the enabling and disabling of the mode.
-// Without overwrite they execute a transition to the en-/disable_pose and return if it was successful or not.
-bool LocomotionMode::enabling_sequence()
-{
-  return transition_to_robot_pose(enable_pose_name_);
-}
-
-bool LocomotionMode::disabling_sequence()
-{
-  return transition_to_robot_pose(disable_pose_name_);
-}
-
-
 // Callback for the enable service
 void LocomotionMode::enable_callback(
   __attribute__((unused)) const std_srvs::srv::Trigger::Request::SharedPtr request,
@@ -306,17 +303,21 @@ void LocomotionMode::disable_callback(
   }
 }
 
-// Dummy Callback function in case the derived class forgets to create a custom callback function
-void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+// Function to be called from the derived class while it is being initialized.
+// Creates a subscriber using the (now by derived class overwritten) callback function
+void LocomotionMode::enable_subscribers()
 {
-  RCLCPP_INFO(this->get_logger(), "X_linear: %f.", msg->linear.x);
-  RCLCPP_INFO(this->get_logger(), "Y_linear: %f.", msg->linear.y);
-  RCLCPP_INFO(this->get_logger(), "Z_linear: %f.", msg->linear.z);
-  RCLCPP_INFO(this->get_logger(), "X_angular: %f.", msg->angular.x);
-  RCLCPP_INFO(this->get_logger(), "Y_angular: %f.", msg->angular.y);
-
-  RCLCPP_WARN(this->get_logger(), "Rover Velocities Callback was not overridden!");
+  rover_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
+    "rover_motion_cmd", 10,
+    std::bind(&LocomotionMode::rover_velocities_callback, this, std::placeholders::_1));
 }
+
+// Disable the subscribers
+void LocomotionMode::disable_subscribers()
+{
+  rover_velocities_subscription_.reset();
+}
+
 
 
 // Callback function, that saves the joint states into the class

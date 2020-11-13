@@ -25,6 +25,17 @@ namespace locomotion_mode {
     LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
 
   protected:
+    // Velocities Callback
+    virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+
+    // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
+    // Robot pose consists of preprogrammed motor position and velocities.
+    bool transition_to_robot_pose(std::string transition_name);
+
+    // Prototype functions that can be overwritten by the derived class.
+    virtual bool enabling_sequence();
+    virtual bool disabling_sequence();
+    
     // Node name which should be set by derived class.
     std::string node_name_;
 
@@ -37,33 +48,11 @@ namespace locomotion_mode {
 
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
-    // Velocities Callback
-    virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 
     // Initialize Messages
     rover_msgs::msg::JointCommandArray joint_command_array_;
 
-    // Prototype functions that can be overwritten by the derived class.
-    virtual bool enabling_sequence();
-    virtual bool disabling_sequence();
-
-    // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
-    // Robot pose consists of preprogrammed motor position and velocities.
-    bool transition_to_robot_pose(std::string transition_name);
-
   private:
-    // Load parameters
-    void load_params();
-
-    // Create rover model from urdf path
-    void load_robot_model();
-
-    // Node can only work if it is enabled.
-    bool enabled_;
-
-    // Access parameters through the parameters_client_
-    std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
-
     // TODO: Does this need to be defined here?
     // Defines which positions are used in the enable and disable transition.
     struct RobotPose
@@ -71,16 +60,12 @@ namespace locomotion_mode {
       std::vector<double> str_positions;
       std::vector<double> dep_positions;
     };
-
-    // Mapping of steering and deployment joints to poses array, both are specified in config.
-    std::vector<std::string> str_mapping_;
-    std::vector<std::string> dep_mapping_;
     
-    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
+    // Load parameters
+    void load_params();
 
-    // Services Objects
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_service_;
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
+    // Create rover model from urdf path
+    void load_robot_model();
 
     // Services Callbacks
     void enable_callback(
@@ -96,14 +81,31 @@ namespace locomotion_mode {
     // Disable Subscribers by changing their topic name and changing their callback function to a dummy class.
     void disable_subscribers();
 
+    // Joint States Callback
+    void joint_state_callback(
+      const sensor_msgs::msg::JointState::SharedPtr msg);
+
+    // Node can only work if it is enabled.
+    bool enabled_;
+
+    // Access parameters through the parameters_client_
+    std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
+
+    // Mapping of steering and deployment joints to poses array, both are specified in config.
+    std::vector<std::string> str_mapping_;
+    std::vector<std::string> dep_mapping_;
+    
+    std::map<std::string, std::shared_ptr<LocomotionMode::RobotPose>> poses_;
+
+    // Services Objects
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_service_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_service_;
+
     // Rover Velocities Subscription
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr rover_velocities_subscription_;
 
     // Joint States Subscription
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
-
-    // Joint States Callback
-    void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
     // URDF Model
     std::string model_path_;
@@ -111,7 +113,6 @@ namespace locomotion_mode {
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
-
   };
 
 }

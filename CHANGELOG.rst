@@ -4,6 +4,9 @@ Changelog for package locomotion_mode
 
 TODO
 ----
+* Change functions to camelCase from snake_case
+* Reorder definition and declarations
+* Make transpose_pose private?
 * Move robot poses to different class or function
 * robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
 * go through TODO's in code
