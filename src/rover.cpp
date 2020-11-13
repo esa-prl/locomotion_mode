@@ -74,15 +74,15 @@ urdf::Pose Rover::get_parent_joint_position(const std::shared_ptr<urdf::Link> & 
 }
 
 // Trasposes position of child pose into the coordinate frame of the parent pose.
-urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
+urdf::Pose Rover::transpose_pose(const urdf::Pose parent, const urdf::Pose child)
 {
   // Based on convention from Robot Dynamics of RSL@ETHZ. Also found on Hendriks RD-Summary
   urdf::Pose new_child;
 
-  double & e0 = parent.rotation.w;
-  double & e1 = parent.rotation.x;
-  double & e2 = parent.rotation.y;
-  double & e3 = parent.rotation.z;
+  double e0 = parent.rotation.w;
+  double e1 = parent.rotation.x;
+  double e2 = parent.rotation.y;
+  double e3 = parent.rotation.z;
 
   // Populate rotation matrix from parent quaternion.
   double c11 = pow(e0, 2) + pow(e1, 2) - pow(e2, 2) - pow(e3, 2);
@@ -96,9 +96,9 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
   double c33 = pow(e0, 2) - pow(e1, 2) - pow(e2, 2) + pow(e3, 2);
 
   // Populate parent translation vector.
-  double & c14 = parent.position.x;
-  double & c24 = parent.position.y;
-  double & c34 = parent.position.z;
+  double c14 = parent.position.x;
+  double c24 = parent.position.y;
+  double c34 = parent.position.z;
 
   // Compute transposed child by pos_child_in_parent_frame=_child_to_parent*pos_child_in_child_frame
   new_child.position.x = c11 * child.position.x + c12 * child.position.y + c13 * child.position.z +
@@ -116,7 +116,7 @@ urdf::Pose Rover::transpose_pose(urdf::Pose parent, urdf::Pose child)
 // Find a link in the parents of the provided link which.
 // The link is found if the search_name is in the link_name. They don't have to match fully.
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
-  const std::shared_ptr<urdf::Link> & start_link, std::string search_name)
+  const std::shared_ptr<urdf::Link> & start_link, const std::string search_name)
 {
   // Copy link so we don't overwrite the original one
   std::shared_ptr<urdf::Link> tmp_link = start_link;
@@ -133,7 +133,7 @@ std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   return std::make_shared<urdf::Link>();
 }
 
-Rover::Motor::Motor(std::shared_ptr<urdf::Link> init_link) :
+Rover::Motor::Motor(const std::shared_ptr<urdf::Link> init_link) :
 current_state(std::make_shared<State>())
 {
   // Init motor
