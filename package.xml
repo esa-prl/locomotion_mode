@@ -2,8 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>locomotion_mode</name>
-  <version>0.0.0</version>
-  <description>Package contains base class which provides interfaces to the rover pipeline.</description>
+  <version>0.0.2</version>
+  <description>Library helping to implement locomotion modes for the PRL rovers. Takes care of standard interfaces such as subscribing, services, model parsing.</description>
   <maintainer email="miro.voellmy@esa.int">Miro Voellmy</maintainer>
   <license>GPLv3</license>
 

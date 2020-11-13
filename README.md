@@ -86,7 +86,7 @@ This node should never be started without being inherited by a derived class.
 	This service enables the locomotion mode. The subscription to the topic `rover_motion_cmd` is activated. This service should only be called from the locomotion manager.
 
 * **`NODE_NAME/disable`** ([std_srvs/Trigger])
-	This service enables the locomotion mode. The subscription to the topic `rover_motion_cmd` is deactivated. This service should only be called from the locomotion manager.
+	This service disables the locomotion mode. The subscription to the topic `rover_motion_cmd` is deactivated. This service should only be called from the locomotion manager.
 
 
 ### stop_mode_node
