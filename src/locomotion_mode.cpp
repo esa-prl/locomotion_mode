@@ -5,14 +5,13 @@
 
 using namespace locomotion_mode;
 
-LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, std::string node_name)
+LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string node_name)
 : Node(node_name,
     options.allow_undeclared_parameters(true).
     automatically_declare_parameters_from_overrides(true)),
   // Protected
   node_name_(node_name),
   enabled_(false),
-  parameters_client_(std::make_shared<rclcpp::SyncParametersClient>(this)),
   // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
   // The names could be different for each robot or/and a locomotion mode.
   driving_name_("DRV"), steering_name_("STR"), deployment_name_("DEP")
@@ -130,16 +129,8 @@ bool LocomotionMode::disabling_sequence()
 // Load Parameters
 void LocomotionMode::load_params()
 {
-  while (!parameters_client_->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
-      rclcpp::shutdown();
-    }
-    RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
-  }
-
   // Load urdf model path
-  model_path_ = parameters_client_->get_parameters({"urdf_path"})[0].value_to_string();
+  model_path_ = this->get_parameter("urdf_path").as_string();
 
   //// LOAD POSES
   std::string search_prefix = "poses";
@@ -147,8 +138,8 @@ void LocomotionMode::load_params()
   std::vector<std::string> parameter_list = this->list_parameters({search_prefix}, 3).names;
 
   // Load joint mapping
-  str_mapping_ = parameters_client_->get_parameters({"str_mapping"})[0].as_string_array();
-  dep_mapping_ = parameters_client_->get_parameters({"dep_mapping"})[0].as_string_array();
+  str_mapping_ = this->get_parameters({"str_mapping"})[0].as_string_array();
+  dep_mapping_ = this->get_parameters({"dep_mapping"})[0].as_string_array();
 
   // Create empty "NONE" pose.
   poses_["NONE"] = std::make_shared<LocomotionMode::RobotPose>();
@@ -190,10 +181,10 @@ void LocomotionMode::load_params()
         // Check where to save the positions of the given parameter
         if (!positions_name.compare("dep_positions")) {
           poses_[pose_name]->dep_positions =
-            parameters_client_->get_parameters({parameter_name})[0].as_double_array();
+            this->get_parameters({parameter_name})[0].as_double_array();
         } else if (!positions_name.compare("str_positions")) {
           poses_[pose_name]->str_positions =
-            parameters_client_->get_parameters({parameter_name})[0].as_double_array();
+            this->get_parameters({parameter_name})[0].as_double_array();
         } else {
           RCLCPP_ERROR(
             this->get_logger(),
@@ -229,9 +220,9 @@ void LocomotionMode::load_params()
   RCLCPP_DEBUG(this->get_logger(), "\t---------------------");
 
   // Get names for enable and disable poses
-  enable_pose_name_ = parameters_client_->get_parameters({"enable_pose_name"})[0].value_to_string();
+  enable_pose_name_ = this->get_parameters({"enable_pose_name"})[0].value_to_string();
   disable_pose_name_ =
-    parameters_client_->get_parameters({"disable_pose_name"})[0].value_to_string();
+    this->get_parameters({"disable_pose_name"})[0].value_to_string();
 
   if (poses_.count(enable_pose_name_) == 0) {
     RCLCPP_ERROR(

@@ -88,9 +88,6 @@ namespace locomotion_mode {
     // Node can only work if it is enabled.
     bool enabled_;
 
-    // Access parameters through the parameters_client_
-    std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
-
     // Mapping of steering and deployment joints to poses array, both are specified in config.
     std::vector<std::string> str_mapping_;
     std::vector<std::string> dep_mapping_;
