@@ -11,10 +11,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string no
     automatically_declare_parameters_from_overrides(true)),
   // Protected
   node_name_(node_name),
-  enabled_(false),
-  // TODO: Add option to overwrite drive names. However, overwriting those should NOT be standard!
-  // The names could be different for each robot or/and a locomotion mode.
-  driving_name_("DRV"), steering_name_("STR"), deployment_name_("DEP")
+  enabled_(false)
 {
   // Load Parameters
   load_params();
@@ -131,6 +128,12 @@ void LocomotionMode::load_params()
 {
   // Load urdf model path
   model_path_ = this->get_parameter("urdf_path").as_string();
+
+  driving_name_ = this->get_parameter("driving_identifier").as_string();
+  steering_name_ = this->get_parameter("steering_identifier").as_string();
+  deployment_name_ = this->get_parameter("deployment_identifier").as_string();
+
+  // std::string joint_regex = this->get_parmeter("joint_regex").as_string();
 
   //// LOAD POSES
   std::string search_prefix = "poses";

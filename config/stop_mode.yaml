@@ -1,5 +1,9 @@
 stop_mode_node:
     ros__parameters:
+        driving_identifier: "DRV"
+        steering_identifier: "STR"
+        deployment_identifier: "DEP"
+
         enable_pose_name: "NONE"
         disable_pose_name: "NONE"
 

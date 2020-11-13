@@ -2,6 +2,7 @@
 #define ROVER_H
 
 #include <urdf/model.h>
+#include <regex>
 
 namespace locomotion_mode{
 

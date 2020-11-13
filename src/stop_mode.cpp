@@ -16,7 +16,6 @@ void StopMode::rover_velocities_callback(
   rover_msgs::msg::JointCommand driving_msg;
 
   for (auto leg : rover_->legs_) {
-
     driving_msg.name = leg->driving_motor->joint->name;
     driving_msg.mode = ("VELOCITY");
     driving_msg.value = 0;

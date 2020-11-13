@@ -4,18 +4,15 @@ Changelog for package locomotion_mode
 
 TODO
 ----
-* Change functions to camelCase from snake_case
-* Parameter loading
-* Make transpose_pose private?
+* Generalize Leg name determination
+* Use regex to determine joint type
 * Move robot poses to different class or function
 * robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
 * go through TODO's in code
  * Transpose orientation and position
-* Change Function Names to CamelCase
-* Generalize Leg name determination
-* Use regex to determine joint type
 * Create template function for a frequency based execution.
 * Use Map for motors instead of individual objects and a vector
+* Change Function Names to CamelCase
 
 NICE TO HAVE
 ------------
@@ -26,6 +23,8 @@ KNOWN BUGS
 
 0.0.2 - (unreleased)
 ------------------
+* Cleanup parameter loading
+* Make transpose_pose private
 * Reorder definition and declarations
 * Remove urdf calls from simple_rover_locomotion and stop_mode
 * Add wheel diameter computation to rover class

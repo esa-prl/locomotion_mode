@@ -118,13 +118,17 @@ urdf::Pose Rover::transpose_pose(const urdf::Pose parent, const urdf::Pose child
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   const std::shared_ptr<urdf::Link> & start_link, const std::string search_name)
 {
+  auto reg_exp = std::regex("(?:^|_|:)"+search_name+"(?:$|_)");
+
+
   // Copy link so we don't overwrite the original one
   std::shared_ptr<urdf::Link> tmp_link = start_link;
 
   while (tmp_link->parent_joint) {
     // If the search_name is found within the link name the search is aborted and said link is returned
     // TODO: Insert regex here
-    if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
+    // if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
+    if(std::regex_search(tmp_link->parent_joint->name, reg_exp)) {
       return tmp_link;
     }
     tmp_link = tmp_link->getParent();
@@ -175,6 +179,7 @@ deployment_motor(dep_motor)
   compute_wheel_diameter();
 
   // Find name for leg by keeping the last two digits of the joint name.
+  // TODO: Insert leg regex here
   name = driving_motor->joint->name;
   name.erase(name.begin(), name.end() - 2);
 }
