@@ -36,7 +36,7 @@ set(dependencies
 
 # add library
 file(GLOB MY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
-add_library(${PROJECT_NAME} STATIC ${MY_SOURCES})
+add_library(${PROJECT_NAME} ${MY_SOURCES})
 
 # specify include paths and dependencies
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})

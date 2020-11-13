@@ -8,6 +8,7 @@ TODO
 * robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
 * go through TODO's in code
  * Transpose orientation and position
+* Change Function Names to CamelCase
 * Generalize Leg name determination
 * Use regex to determine joint type
 * Create template function for a frequency based execution.

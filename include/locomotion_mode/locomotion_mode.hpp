@@ -64,10 +64,6 @@ namespace locomotion_mode {
     // Access parameters through the parameters_client_
     std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
 
-    // Transition names (loaded from config) to specify which robot_pose_transition is done when it is being dis-/enabled.
-    // robot_pose_transition(TARGET_POSE)
-    // TARGET_POSE = {CURRENT, POSE_1, POSE_2, etc.}
-
     // TODO: Does this need to be defined here?
     // Defines which positions are used in the enable and disable transition.
     struct RobotPose
