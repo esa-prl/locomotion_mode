@@ -62,7 +62,7 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
 
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
-bool LocomotionMode::transition_to_robot_pose(std::string pose_name)
+bool LocomotionMode::transition_to_robot_pose(const std::string pose_name)
 {
   RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
   // Checks if pose_name is NONE and returns.

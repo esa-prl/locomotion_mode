@@ -12,7 +12,10 @@ namespace locomotion_mode{
 
     struct Motor;
 
-    Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::string model_path);
+    Rover(const std::string driving_name,
+          const std::string steering_name,
+          const std::string deployment_name,
+          const std::string model_path);
 
     bool parse_model();
     

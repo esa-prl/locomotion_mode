@@ -3,7 +3,10 @@
 
 using namespace locomotion_mode;
 
-Rover::Rover(std::string driving_name, std::string steering_name, std::string deployment_name, std::string model_path)
+Rover::Rover(const std::string driving_name,
+             const std::string steering_name,
+             const std::string deployment_name,
+             const std::string model_path)
 : model_(new urdf::Model())
 {
 

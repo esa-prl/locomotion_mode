@@ -22,7 +22,7 @@ namespace locomotion_mode {
   class LocomotionMode : public rclcpp::Node
   {
   public:
-    LocomotionMode(rclcpp::NodeOptions options, std::string node_name);
+    LocomotionMode(rclcpp::NodeOptions options, const std::string node_name);
 
   protected:
     // Velocities Callback
@@ -30,7 +30,7 @@ namespace locomotion_mode {
 
     // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
     // Robot pose consists of preprogrammed motor position and velocities.
-    bool transition_to_robot_pose(std::string transition_name);
+    bool transition_to_robot_pose(const std::string pose_name);
 
     // Prototype functions that can be overwritten by the derived class.
     virtual bool enabling_sequence();
