@@ -1,5 +1,4 @@
-#ifndef LOCOMOTION_MODE_H
-#define LOCOMOTION_MODE_H
+#pragma once
 
 #include <chrono>
 #include <string.h>
@@ -117,4 +116,3 @@ namespace locomotion_mode {
   };
 
 }
-#endif

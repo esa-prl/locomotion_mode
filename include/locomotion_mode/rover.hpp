@@ -1,5 +1,4 @@
-#ifndef ROVER_H
-#define ROVER_H
+#pragma once
 
 #include <urdf/model.h>
 #include <regex>
@@ -87,4 +86,3 @@ namespace locomotion_mode{
   };
 
 }
-#endif

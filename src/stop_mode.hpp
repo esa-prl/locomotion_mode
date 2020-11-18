@@ -1,5 +1,4 @@
-#ifndef STOP_MODE_H
-#define STOP_MODE_H
+#pragma once
 
 #include "locomotion_mode/locomotion_mode.hpp"
 
@@ -14,5 +13,3 @@ namespace locomotion_mode {
     rover_msgs::msg::JointCommandArray compute_joint_commands(const geometry_msgs::msg::Twist::SharedPtr msg);
   };
 }
-
-#endif
