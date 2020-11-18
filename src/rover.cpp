@@ -6,10 +6,11 @@ using namespace locomotion_mode;
 Rover::Rover(const std::string driving_name,
              const std::string steering_name,
              const std::string deployment_name,
-             const std::string model_path)
-: model_(new urdf::Model())
+             const std::string model_path,
+             const std::string leg_regex_string)
+: model_(new urdf::Model()),
+leg_regex(leg_regex_string)
 {
-
   if (driving_name.empty() || steering_name.empty() || deployment_name.empty()) {
     RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Identification strings is/are empty.");
     RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
@@ -43,8 +44,30 @@ bool Rover::parse_model() {
   for (std::shared_ptr<urdf::Link> link : links) {
 
     // Look for Driving link and create leg of locomotion model
-    if (link->name.find(driving_name_) != std::string::npos) {    
-      auto leg = std::make_shared<Leg>(std::make_shared<Rover::Motor>(link),
+    if (link->name.find(driving_name_) != std::string::npos) {
+      // Derive name for leg by keeping the last two digits of the joint name.
+      std::string leg_name;
+
+      try {
+        std::smatch match;
+        // Search for leg name within the driving link name
+        if (std::regex_search(link->name, match, leg_regex) && match.size() > 1) {
+          // Set first captured group as leg name
+          leg_name = match.str(1);
+        }
+        else {
+          leg_name = std::string("LEG_NAME_NOT_FOUND");
+          RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
+            "No leg name matched.");
+        }
+      } catch (std::regex_error &e) {
+        RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
+          "Syntax error in the leg name regular expression.");
+      }
+
+      // Create leg, based on name, driving, steering and deployment links
+      auto leg = std::make_shared<Leg>(leg_name,
+                                       std::make_shared<Rover::Motor>(link),
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, steering_name_)),
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, deployment_name_)));
 
@@ -118,7 +141,7 @@ urdf::Pose Rover::transpose_pose(const urdf::Pose parent, const urdf::Pose child
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   const std::shared_ptr<urdf::Link> & start_link, const std::string search_name)
 {
-  auto reg_exp = std::regex("(?:^|_|:)"+search_name+"(?:$|_)");
+  auto reg_exp = std::regex("(?:^|_)"+search_name+"(?:$|_)");
 
 
   // Copy link so we don't overwrite the original one
@@ -126,8 +149,6 @@ std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
 
   while (tmp_link->parent_joint) {
     // If the search_name is found within the link name the search is aborted and said link is returned
-    // TODO: Insert regex here
-    // if (tmp_link->parent_joint->name.find(search_name) != std::string::npos) {
     if(std::regex_search(tmp_link->parent_joint->name, reg_exp)) {
       return tmp_link;
     }
@@ -164,10 +185,12 @@ deployment_motor(std::make_shared<Motor>())
   motors.push_back(deployment_motor);
 }
 
-Rover::Leg::Leg(std::shared_ptr<Motor> drv_motor,
+Rover::Leg::Leg(std::string leg_name,
+                std::shared_ptr<Motor> drv_motor,
                 std::shared_ptr<Motor> str_motor,
                 std::shared_ptr<Motor> dep_motor)
-: driving_motor(drv_motor),
+: name(leg_name),
+driving_motor(drv_motor),
 steering_motor(str_motor),
 deployment_motor(dep_motor)
 {
@@ -177,11 +200,6 @@ deployment_motor(dep_motor)
   motors.push_back(deployment_motor);
 
   compute_wheel_diameter();
-
-  // Find name for leg by keeping the last two digits of the joint name.
-  // TODO: Insert leg regex here
-  name = driving_motor->joint->name;
-  name.erase(name.begin(), name.end() - 2);
 }
 
 bool Rover::Leg::compute_wheel_diameter(){

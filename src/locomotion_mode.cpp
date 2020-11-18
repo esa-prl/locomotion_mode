@@ -133,7 +133,7 @@ void LocomotionMode::load_params()
   steering_name_ = this->get_parameter("steering_identifier").as_string();
   deployment_name_ = this->get_parameter("deployment_identifier").as_string();
 
-  // std::string joint_regex = this->get_parmeter("joint_regex").as_string();
+  leg_regex_string_ = this->get_parameter("leg_regex").as_string();
 
   //// LOAD POSES
   std::string search_prefix = "poses";
@@ -246,7 +246,11 @@ void LocomotionMode::load_params()
 // Load Robot Model (URDF or XACRO)
 void LocomotionMode::load_robot_model()
 {
-  rover_.reset(new Rover(driving_name_, steering_name_, deployment_name_, model_path_));
+  rover_.reset(new Rover(driving_name_,
+                         steering_name_,
+                         deployment_name_,
+                         model_path_,
+                         leg_regex_string_));
   
   rover_->parse_model();
 }
@@ -319,7 +323,6 @@ void LocomotionMode::disable_subscribers()
 void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
-
     for (auto leg : rover_->legs_) {
       for (auto motor : leg->motors) {
         // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.

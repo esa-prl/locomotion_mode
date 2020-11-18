@@ -16,10 +16,11 @@ namespace locomotion_mode{
     Rover(const std::string driving_name,
           const std::string steering_name,
           const std::string deployment_name,
-          const std::string model_path);
+          const std::string model_path,
+          const std::string leg_regex_string);
 
     bool parse_model();
-    
+
     // Legs
     std::vector<std::shared_ptr<Leg>> legs_;
 
@@ -30,16 +31,18 @@ namespace locomotion_mode{
     // Trasposes position of child pose into the coordinate frame of the parent pose.
     static urdf::Pose transpose_pose(const urdf::Pose parent,
                                      const urdf::Pose child);
-    
+
     // Find first joint in leg, which name contains the specified name
     std::shared_ptr<urdf::Link> get_link_in_leg(const std::shared_ptr<urdf::Link> & start_link, const std::string search_name);
-    
+
     // URDF Model
     std::shared_ptr<urdf::Model> model_;
 
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
+
+    std::regex leg_regex;
   };
 
   struct Rover::Motor {
@@ -63,7 +66,8 @@ namespace locomotion_mode{
 
   struct Rover::Leg {
     Leg();
-    Leg(std::shared_ptr<Motor> drv_motor,
+    Leg(std::string leg_name,
+        std::shared_ptr<Motor> drv_motor,
         std::shared_ptr<Motor> str_motor,
         std::shared_ptr<Motor> dep_motor);
 

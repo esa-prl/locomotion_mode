@@ -110,6 +110,8 @@ namespace locomotion_mode {
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
+
+    std::string leg_regex_string_;
   };
 
 }
