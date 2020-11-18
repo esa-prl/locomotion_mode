@@ -4,12 +4,9 @@ Changelog for package locomotion_mode
 
 TODO
 ----
-* Use Regex to determine leg name
 * Overwrite dedicated function instead of rover_velocities_callback
-* Move robot poses to different class or function
 * robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
-* go through TODO's in code
- * Transpose orientation and position
+* Transpose orientation and position
 * Create template function for a frequency based execution.
 * Use Map for motors instead of individual objects and a vector
 * Change Function Names to CamelCase
@@ -25,7 +22,8 @@ KNOWN BUGS
 
 0.0.2 - (unreleased)
 ------------------
-* Use regex to determine joint type
+* Use Regex to determine leg name
+* Use regex to find driving, steering and deployment joints
 * Cleanup parameter loading
 * Make transpose_pose private
 * Reorder definition and declarations
