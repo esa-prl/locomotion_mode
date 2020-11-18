@@ -2,8 +2,7 @@
 
 #include <regex>
 
-
-using namespace locomotion_mode;
+namespace locomotion_mode{
 
 LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string node_name)
 : Node(node_name,
@@ -371,4 +370,6 @@ void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::Sh
       }
     }
   }
+}
+
 }

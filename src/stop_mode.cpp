@@ -1,6 +1,6 @@
 #include "stop_mode.hpp"
 
-using namespace locomotion_mode;
+namespace locomotion_mode{
 
 StopMode::StopMode(rclcpp::NodeOptions options, std::string node_name)
 : LocomotionMode(options, node_name)
@@ -27,12 +27,13 @@ rover_msgs::msg::JointCommandArray StopMode::compute_joint_commands(
   return joint_command_array_msg;
 }
 
+}
 
 int main(int argc, char * argv[])
 {
   rclcpp::NodeOptions options;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<StopMode>(options, "stop_mode_node"));
+  rclcpp::spin(std::make_shared<locomotion_mode::StopMode>(options, "stop_mode_node"));
   rclcpp::shutdown();
   return 0;
 }

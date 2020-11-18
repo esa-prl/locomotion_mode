@@ -1,7 +1,7 @@
 #include <locomotion_mode/rover.hpp>
 #include "rclcpp/rclcpp.hpp"
 
-using namespace locomotion_mode;
+namespace locomotion_mode{
 
 Rover::Rover(const std::string driving_name,
              const std::string steering_name,
@@ -228,4 +228,6 @@ bool Rover::Leg::compute_wheel_diameter(){
 
     return false;
   }
+}
+
 }
