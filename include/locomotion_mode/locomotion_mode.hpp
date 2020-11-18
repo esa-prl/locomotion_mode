@@ -28,6 +28,8 @@ namespace locomotion_mode {
     // Velocities Callback
     virtual void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 
+    virtual rover_msgs::msg::JointCommandArray compute_joint_commands(const geometry_msgs::msg::Twist::SharedPtr msg);
+
     // Blocking transition to the input robot pose. Returns true once pose is sufficiently reached.
     // Robot pose consists of preprogrammed motor position and velocities.
     bool transition_to_robot_pose(const std::string pose_name);
@@ -46,6 +48,7 @@ namespace locomotion_mode {
     // Model
     std::shared_ptr<Rover> rover_;
 
+    // TODO: Make private
     // Joints Pulisher
     rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 

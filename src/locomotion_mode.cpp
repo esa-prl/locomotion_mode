@@ -47,15 +47,23 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string no
 // Dummy Callback function in case the derived class forgets to create a custom callback function
 void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-  RCLCPP_INFO(this->get_logger(), "X_linear: %f.", msg->linear.x);
-  RCLCPP_INFO(this->get_logger(), "Y_linear: %f.", msg->linear.y);
-  RCLCPP_INFO(this->get_logger(), "Z_linear: %f.", msg->linear.z);
-  RCLCPP_INFO(this->get_logger(), "X_angular: %f.", msg->angular.x);
-  RCLCPP_INFO(this->get_logger(), "Y_angular: %f.", msg->angular.y);
+  rover_msgs::msg::JointCommandArray joint_command_array_msg;
 
-  RCLCPP_WARN(this->get_logger(), "Rover Velocities Callback was not overridden!");
+  joint_command_array_msg = compute_joint_commands(msg);
+
+  // TODO: Check size of array
+  // Publish Message
+  joint_command_publisher_->publish(joint_command_array_msg);
 }
 
+rover_msgs::msg::JointCommandArray LocomotionMode::compute_joint_commands(
+  __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  RCLCPP_WARN(this->get_logger(), "compute_joint_commands was not overridden!");
+  rover_msgs::msg::JointCommandArray joint_command_array_msg;
+
+  return joint_command_array_msg;
+}
 
 // Blocking function that returns true once a transition to a desired pose was achieved.
 bool LocomotionMode::transition_to_robot_pose(const std::string pose_name)

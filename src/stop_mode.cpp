@@ -7,7 +7,7 @@ StopMode::StopMode(rclcpp::NodeOptions options, std::string node_name)
 {
 }
 
-void StopMode::rover_velocities_callback(
+rover_msgs::msg::JointCommandArray StopMode::compute_joint_commands(
   __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg)
 {
 
@@ -15,17 +15,16 @@ void StopMode::rover_velocities_callback(
 
   rover_msgs::msg::JointCommand driving_msg;
 
+  // Set driving motor velocity to 0
   for (auto leg : rover_->legs_) {
     driving_msg.name = leg->driving_motor->joint->name;
     driving_msg.mode = ("VELOCITY");
     driving_msg.value = 0;
 
     joint_command_array_msg.joint_command_array.push_back(driving_msg);
-
   }
 
-  // Publish Message
-  joint_command_publisher_->publish(joint_command_array_msg);
+  return joint_command_array_msg;
 }
 
 

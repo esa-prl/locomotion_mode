@@ -11,7 +11,7 @@ namespace locomotion_mode {
     StopMode(rclcpp::NodeOptions options, std::string node_name);
 
   private:
-    void rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+    rover_msgs::msg::JointCommandArray compute_joint_commands(const geometry_msgs::msg::Twist::SharedPtr msg);
   };
 }
 
