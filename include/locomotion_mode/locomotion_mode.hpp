@@ -48,10 +48,6 @@ namespace locomotion_mode {
     // Model
     std::shared_ptr<Rover> rover_;
 
-    // TODO: Make private
-    // Joints Pulisher
-    rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
-
     // Initialize Messages
     rover_msgs::msg::JointCommandArray joint_command_array_;
 
@@ -106,6 +102,9 @@ namespace locomotion_mode {
 
     // Joint States Subscription
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
+
+    // Joints Pulisher
+    rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 
     // URDF Model
     std::string model_path_;
