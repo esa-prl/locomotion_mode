@@ -43,8 +43,10 @@ bool Rover::parse_model() {
   // Loop through all links
   for (std::shared_ptr<urdf::Link> link : links) {
 
+    std::regex reg_exp("(?:^|_)"+driving_name_+"(?:$|_)");
+
     // Look for Driving link and create leg of locomotion model
-    if (link->name.find(driving_name_) != std::string::npos) {
+    if (std::regex_search(link->name, reg_exp)) {
       // Derive name for leg by keeping the last two digits of the joint name.
       std::string leg_name;
 
@@ -141,8 +143,7 @@ urdf::Pose Rover::transpose_pose(const urdf::Pose parent, const urdf::Pose child
 std::shared_ptr<urdf::Link> Rover::get_link_in_leg(
   const std::shared_ptr<urdf::Link> & start_link, const std::string search_name)
 {
-  auto reg_exp = std::regex("(?:^|_)"+search_name+"(?:$|_)");
-
+  std::regex reg_exp("(?:^|_)"+search_name+"(?:$|_)");
 
   // Copy link so we don't overwrite the original one
   std::shared_ptr<urdf::Link> tmp_link = start_link;
