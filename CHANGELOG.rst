@@ -10,9 +10,10 @@ TODO
 
 NICE TO HAVE
 ------------
+* Wait for transition to robot pose to finish
 * Create template function for a frequency based execution.
 * Remove node options from LocomotionMode
-* Change Function Names to CamelCase
+* Change Function Names to camelCase
 * robotposes are implemented in as specific deployment and steering positions. Might make sense to generalize them and have a single vector containing position and names (inkl. DEP_RM or STR_LL) to make it more flexible and simplify the code.
 
 KNOWN BUGS
@@ -23,6 +24,7 @@ Declaring other parameters manually in order to use default values doesn't work 
 
 0.0.2 - (unreleased)
 ------------------
+* Changing modes now stops the driving
 * make load_robot_model into bool
 * Overwrite dedicated function instead of rover_velocities_callback
 * Use Regex to determine leg name

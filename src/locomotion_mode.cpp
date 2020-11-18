@@ -72,16 +72,21 @@ bool LocomotionMode::transition_to_robot_pose(const std::string pose_name)
 {
   RCLCPP_DEBUG(this->get_logger(), "Transitioning to pose %s", pose_name.c_str());
   // Checks if pose_name is NONE and returns.
-  if (!pose_name.compare("NONE"))
-  {
-    return true;
-  }
-  else {
-    rover_msgs::msg::JointCommand joint_command_msg;
-    rover_msgs::msg::JointCommandArray joint_command_array_msg;
+  rover_msgs::msg::JointCommand joint_command_msg;
+  rover_msgs::msg::JointCommandArray joint_command_array_msg;
 
-    // Loops through legs
-    for (auto leg : rover_->legs_) {
+  bool transition_to_pose = (pose_name != "NONE");
+
+  for (auto leg : rover_->legs_) {
+    // Stop all driving
+    joint_command_msg.name = leg->driving_motor->joint->name;
+    joint_command_msg.mode = ("VELOCITY");
+    joint_command_msg.value = 0;
+
+    joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
+
+    // Only send position commands if the pose shall be changed
+    if (transition_to_pose) {
       // Checks if leg is steerable
       if (leg->steering_motor->joint) {
         // Finds desired motor index (int) based on motor name.
@@ -111,12 +116,13 @@ bool LocomotionMode::transition_to_robot_pose(const std::string pose_name)
         joint_command_array_msg.joint_command_array.push_back(joint_command_msg);
       }
 
-    }
+  }
 
     joint_command_publisher_->publish(joint_command_array_msg);
-    // TODO: Add wait to see if the position was actually reached.
-    return true;
   }
+  
+  // TODO: Add wait to see if the position was actually reached.
+  return true;
 }
 
 // enabling_sequence() and disabling_sequence() are called from the enable_ and disable_callback.

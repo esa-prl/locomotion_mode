@@ -37,6 +37,9 @@ namespace locomotion_mode {
     virtual bool enabling_sequence();
     virtual bool disabling_sequence();
     
+    // Joints Pulisher
+    rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
+
     // Node name which should be set by derived class.
     std::string node_name_;
 
@@ -101,9 +104,6 @@ namespace locomotion_mode {
 
     // Joint States Subscription
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscription_;
-
-    // Joints Pulisher
-    rclcpp::Publisher<rover_msgs::msg::JointCommandArray>::SharedPtr joint_command_publisher_;
 
     // URDF Model
     std::string model_path_;
