@@ -17,7 +17,9 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string no
   load_params();
 
   // Load URDF
-  load_robot_model();
+  if(!load_robot_model()){
+    RCLCPP_ERROR(this->get_logger(), "Loading of robot model failed!");
+  }
 
   // Create Services
   enable_service_ = this->create_service<std_srvs::srv::Trigger>(
@@ -252,7 +254,7 @@ void LocomotionMode::load_params()
 }
 
 // Load Robot Model (URDF or XACRO)
-void LocomotionMode::load_robot_model()
+bool LocomotionMode::load_robot_model()
 {
   rover_.reset(new Rover(driving_name_,
                          steering_name_,
@@ -260,7 +262,7 @@ void LocomotionMode::load_robot_model()
                          model_path_,
                          leg_regex_string_));
   
-  rover_->parse_model();
+  return rover_->parse_model();
 }
 
 // Callback for the enable service

@@ -9,6 +9,7 @@ Rover::Rover(const std::string driving_name,
              const std::string model_path,
              const std::string leg_regex_string)
 : model_(new urdf::Model()),
+model_path_(model_path),
 leg_regex(leg_regex_string)
 {
   if (driving_name.empty() || steering_name.empty() || deployment_name.empty()) {
@@ -21,20 +22,21 @@ leg_regex(leg_regex_string)
   steering_name_ = steering_name;
   deployment_name_ = deployment_name;
 
+}
+
+bool Rover::parse_model() {
   // Load Model from path
-  if (!model_->initFile(model_path)) {
+  if (!model_->initFile(model_path_)) {
     RCLCPP_ERROR(
       rclcpp::get_logger("rover_parser"),
         "URDF file [%s] not found. Make sure the path is specified in the launch file.",
-        model_path.c_str());
+        model_path_.c_str());
+        return false;
   }
   else {
     RCLCPP_INFO(rclcpp::get_logger("rover_parser"),
       "URDF file loaded successfully.");
   }
-}
-
-bool Rover::parse_model() {
 
   std::vector<std::shared_ptr<urdf::Link>> links;
 
@@ -43,6 +45,9 @@ bool Rover::parse_model() {
   // Loop through all links
   for (std::shared_ptr<urdf::Link> link : links) {
 
+    // Regular expression that matches if the driving name is either
+    // an underscore or nothing before OR
+    // and underscore or nothing afterwards.
     std::regex reg_exp("(?:^|_)"+driving_name_+"(?:$|_)");
 
     // Look for Driving link and create leg of locomotion model
@@ -61,10 +66,12 @@ bool Rover::parse_model() {
           leg_name = std::string("LEG_NAME_NOT_FOUND");
           RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
             "No leg name matched.");
+          return false;
         }
       } catch (std::regex_error &e) {
         RCLCPP_ERROR(rclcpp::get_logger("rover_parser"),
           "Syntax error in the leg name regular expression.");
+        return false;
       }
 
       // Create leg, based on name, driving, steering and deployment links

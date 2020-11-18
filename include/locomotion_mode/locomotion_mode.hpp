@@ -63,7 +63,7 @@ namespace locomotion_mode {
     void load_params();
 
     // Create rover model from urdf path
-    void load_robot_model();
+    bool load_robot_model();
 
     // Services Callbacks
     void enable_callback(

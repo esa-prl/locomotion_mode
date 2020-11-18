@@ -37,6 +37,8 @@ namespace locomotion_mode{
     // URDF Model
     std::shared_ptr<urdf::Model> model_;
 
+    std::string model_path_;
+
     std::string driving_name_;
     std::string steering_name_;
     std::string deployment_name_;
