@@ -7,10 +7,10 @@ TODO
 * Transpose orientation and position
 * Use Map for motors instead of individual objects and a vector
 * Put find leg name into function
+* Wait for transition to robot pose to finish
 
 NICE TO HAVE
 ------------
-* Wait for transition to robot pose to finish
 * Create template function for a frequency based execution.
 * Remove node options from LocomotionMode
 * Change Function Names to camelCase

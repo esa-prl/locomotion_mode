@@ -45,7 +45,7 @@ LocomotionMode::LocomotionMode(rclcpp::NodeOptions options, const std::string no
   RCLCPP_INFO(this->get_logger(), "%s STARTED.", node_name.c_str());
 }
 
-// Dummy Callback function in case the derived class forgets to create a custom callback function
+// Callback function that publishes the rover joint commands based on the desired body velocity. Can be overwritten.
 void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
   rover_msgs::msg::JointCommandArray joint_command_array_msg;
@@ -57,6 +57,7 @@ void LocomotionMode::rover_velocities_callback(const geometry_msgs::msg::Twist::
   joint_command_publisher_->publish(joint_command_array_msg);
 }
 
+// Compute rover joint commands from desired body velocity. Should be overwritten.
 rover_msgs::msg::JointCommandArray LocomotionMode::compute_joint_commands(
   __attribute__((unused)) const geometry_msgs::msg::Twist::SharedPtr msg)
 {
