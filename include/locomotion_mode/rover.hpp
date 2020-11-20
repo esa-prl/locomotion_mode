@@ -82,6 +82,8 @@ struct Rover::Leg {
   
   double wheel_diameter;
 
+  bool is_steerable();
+
   private:
     // Check if wheel link is cylindrical and use link diameter as wheel diameter
     bool compute_wheel_diameter();

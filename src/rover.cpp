@@ -210,6 +210,15 @@ deployment_motor(dep_motor)
   compute_wheel_diameter();
 }
 
+bool Rover::Leg::is_steerable() {
+  if (steering_motor->joint) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 bool Rover::Leg::compute_wheel_diameter(){
 
   if (this->driving_motor->link->collision->geometry->type == urdf::Geometry::CYLINDER) {
