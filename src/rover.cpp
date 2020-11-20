@@ -80,6 +80,8 @@ bool Rover::parse_model() {
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, steering_name_)),
                                        std::make_shared<Rover::Motor>(get_link_in_leg(link, deployment_name_)));
 
+      motors_.insert(leg->motors.begin(),leg->motors.end());
+
       legs_.push_back(leg);
     }
   }
@@ -177,6 +179,7 @@ current_state(std::make_shared<State>())
     link = init_link;
     joint = link->parent_joint;
     global_pose = Rover::get_parent_joint_position(link);
+    name = joint->name;
   }
   else {
     RCLCPP_WARN(rclcpp::get_logger("rover_parser"), "Joint w/ name [%s] is of type [%u] which is not valid for a motor.", link->parent_joint->name.c_str());
@@ -188,9 +191,6 @@ Rover::Leg::Leg()
 steering_motor(std::make_shared<Motor>()),
 deployment_motor(std::make_shared<Motor>())
 {
-  motors.push_back(driving_motor);
-  motors.push_back(steering_motor);
-  motors.push_back(deployment_motor);
 }
 
 Rover::Leg::Leg(std::string leg_name,
@@ -202,10 +202,9 @@ driving_motor(drv_motor),
 steering_motor(str_motor),
 deployment_motor(dep_motor)
 {
-  // Populate motors vector
-  motors.push_back(driving_motor);
-  motors.push_back(steering_motor);
-  motors.push_back(deployment_motor);
+  motors[driving_motor->name] = driving_motor;
+  motors[steering_motor->name] = steering_motor;
+  motors[deployment_motor->name] = deployment_motor;
 
   compute_wheel_diameter();
 }

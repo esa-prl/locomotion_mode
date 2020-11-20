@@ -339,35 +339,29 @@ void LocomotionMode::disable_subscribers()
 void LocomotionMode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   for (unsigned int i = 0; i < msg->name.size(); i++) {
-    for (auto leg : rover_->legs_) {
-      for (auto motor : leg->motors) {
-        // Check if motor is set. Can be unset in case no steering motor or deployment motor is present.
-        if (motor->joint)
-        {
-          if (motor->joint->name.compare(msg->name[i].c_str()) == 0) {
-            RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
+    // Check if the joint exists in the motor map
+    if (rover_->motors_.count(msg->name[i])) {
+      RCLCPP_DEBUG(this->get_logger(), "Received message for %s Motor.", msg->name[i].c_str());
 
-            if (!msg->position.empty()) {
-              motor->current_state->position = msg->position[i];}
-            else {
-              RCLCPP_WARN(
-                this->get_logger(), "Received no Position for Motor %s",
-                msg->name[i].c_str());
-            }
+      if (!msg->position.empty()) {
+        rover_->motors_[msg->name[i]]->current_state->position = msg->position[i];
+      }
+      else {
+        RCLCPP_WARN(
+          this->get_logger(), "Received no Position for Motor %s",
+          msg->name[i].c_str());
+      }
+      if (!msg->velocity.empty()) {
+        rover_->motors_[msg->name[i]]->current_state->velocity = msg->velocity[i];
+      }
+      else {
+        RCLCPP_WARN(
+          this->get_logger(), "Received no Veloctiy for Motor %s",
+          msg->name[i].c_str());
+      }
 
-            if (!msg->velocity.empty()) {
-              motor->current_state->velocity = msg->velocity[i];}
-            else {
-              RCLCPP_WARN(
-                this->get_logger(), "Received no Veloctiy for Motor %s",
-                msg->name[i].c_str());
-            }
-
-            if (!msg->effort.empty()) {
-              motor->current_state->effort = msg->effort[i];}
-            // else RCLCPP_WARN(this->get_logger(), "Received no Effort   for Motor %s", msg->name[i].c_str());
-          }
-        }
+      if (!msg->effort.empty()) {
+        rover_->motors_[msg->name[i]]->current_state->effort = msg->effort[i];
       }
     }
   }

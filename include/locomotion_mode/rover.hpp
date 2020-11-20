@@ -22,6 +22,8 @@ public:
 
   // Legs
   std::vector<std::shared_ptr<Leg>> legs_;
+  // Motors
+  std::map<std::string, std::shared_ptr<Rover::Motor>> motors_;
 
 private:
   // Derive Position of Joint in static configuration
@@ -57,6 +59,8 @@ struct Rover::Motor {
   std::shared_ptr<urdf::Joint> joint;
   std::shared_ptr<urdf::Link> link;
   urdf::Pose global_pose;
+  // This is the same as the joint name
+  std::string name;
 };
 
 struct Rover::Motor::State {
@@ -78,7 +82,7 @@ struct Rover::Leg {
   std::shared_ptr<Motor> driving_motor;
   std::shared_ptr<Motor> steering_motor;
   std::shared_ptr<Motor> deployment_motor;
-  std::vector<std::shared_ptr<Motor>> motors;
+  std::map<std::string, std::shared_ptr<Motor>> motors;
   
   double wheel_diameter;
 

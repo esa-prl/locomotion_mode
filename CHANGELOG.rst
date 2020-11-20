@@ -5,7 +5,6 @@ Changelog for package locomotion_mode
 TODO
 ----
 * Transpose orientation and position
-* Use Map for motors instead of individual objects and a vector
 * Put find leg name into function
 * Wait for transition to robot pose to finish
 
@@ -24,6 +23,7 @@ Declaring other parameters manually in order to use default values doesn't work 
 
 0.0.2 - (unreleased)
 ------------------
+* Use Map for motors instead of individual objects and a vector
 * Changing modes now stops the driving
 * make load_robot_model into bool
 * Overwrite dedicated function instead of rover_velocities_callback
